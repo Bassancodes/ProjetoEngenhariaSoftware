@@ -3,7 +3,7 @@ export default function HomePage() {
     <div className="min-h-screen bg-gray-100 flex items-center justify-center">
       <div className="text-center">
         <h1 className="text-4xl font-bold text-gray-900 mb-4">Bem-vindo ao BAXEIN WEAR</h1>
-        <p className="text-gray-600 mb-8">Sistema de gestão de e-commerce</p>
+        <p className="text-gray-900 mb-8">Sistema de gestão de e-commerce</p>
         <a
           href="/login"
           className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-md transition-colors duration-200 inline-block"

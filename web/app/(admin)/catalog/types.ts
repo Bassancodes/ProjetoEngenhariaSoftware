@@ -6,11 +6,18 @@ export interface Product {
   price: number;
   originalPrice?: number; // Para produtos em promoção
   image: string;
+  images?: string[]; // Galeria completa de imagens
   category: string;
   sizes: string[];
   colors: string[];
+  description?: string; // Descrição completa do produto
+  rating?: {
+    stars: number; // 1-5
+    count: number; // Número de avaliações
+  };
   isBestSeller?: boolean;
   isOnSale?: boolean;
+  features?: string[]; // Características (Qualidade Premium, Produção Sustentável, etc.)
 }
 
 export interface FilterState {

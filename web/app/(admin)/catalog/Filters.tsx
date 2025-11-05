@@ -93,7 +93,7 @@ export default function Filters({
         <h2 className="text-xl font-bold text-gray-900">Filtros</h2>
         {activeFiltersCount > 0 && (
           <div className="flex items-center gap-3">
-            <span className="text-sm text-gray-600">
+            <span className="text-sm text-gray-900">
               {activeFiltersCount} filtro{activeFiltersCount > 1 ? "s" : ""} ativo{activeFiltersCount > 1 ? "s" : ""}
             </span>
             <button
