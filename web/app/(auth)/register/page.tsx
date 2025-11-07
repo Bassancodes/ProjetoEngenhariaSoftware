@@ -3,7 +3,7 @@ export default function RegisterPage() {
     <div className="min-h-screen bg-gray-100 flex flex-col">
       {/* Header */}
       <div className="absolute top-8 left-8 z-10">
-        <div className="text-sm text-gray-600 mb-1">BAXEIN WEAR - Cadastro</div>
+        <div className="text-sm text-gray-900 mb-1">BAXEIN WEAR - Cadastro</div>
         <div className="text-2xl font-bold text-gray-800">BAXEINWEAR</div>
       </div>
 
@@ -32,7 +32,7 @@ export default function RegisterPage() {
                     type="text"
                     id="fullName"
                     placeholder="Seu nome completo"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black"
                   />
                 </div>
 
@@ -45,7 +45,7 @@ export default function RegisterPage() {
                     type="password"
                     id="password"
                     placeholder="••••••••"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black"
                   />
                 </div>
 
@@ -57,7 +57,7 @@ export default function RegisterPage() {
                   <div className="relative">
                     <select
                       id="accountType"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none bg-white"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none bg-white text-black"
                     >
                       <option value="">Selecione seu perfil</option>
                       <option value="cliente">Cliente</option>
@@ -93,7 +93,7 @@ export default function RegisterPage() {
                     type="email"
                     id="email"
                     placeholder="seu.email@exemplo.com"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black"
                   />
                 </div>
 
@@ -106,7 +106,7 @@ export default function RegisterPage() {
                     type="password"
                     id="confirmPassword"
                     placeholder="••••••••"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black"
                   />
                 </div>
               </div>

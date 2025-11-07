@@ -3,7 +3,7 @@ export default function ResetPasswordPage() {
     <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
       {/* Header */}
       <div className="absolute top-8 left-8">
-        <div className="text-sm text-gray-600 mb-1">BAXEIN WEAR - Recuperar Senha</div>
+        <div className="text-sm text-gray-900 mb-1">BAXEIN WEAR - Recuperar Senha</div>
         <div className="text-2xl font-bold text-gray-800">BAXEINWEAR</div>
       </div>
 
@@ -12,7 +12,7 @@ export default function ResetPasswordPage() {
         {/* Title */}
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Recuperar Senha</h1>
-          <p className="text-gray-600">Digite seu e-mail para receber instruções de recuperação</p>
+          <p className="text-gray-900">Digite seu e-mail para receber instruções de recuperação</p>
         </div>
 
         {/* Form */}
