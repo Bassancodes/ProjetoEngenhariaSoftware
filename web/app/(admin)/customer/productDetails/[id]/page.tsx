@@ -4,7 +4,7 @@ import Image from "next/image";
 import { useState, useMemo } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { useCart } from "@/context/CartContext";
-import { Product } from "@/app/(admin)/catalog/types";
+import { Product } from "@/app/(admin)/customer/catalog/types";
 
 // Dados estáticos dos produtos (mesmo do catálogo, será substituído por API futuramente)
 const allProducts: Product[] = [
@@ -182,7 +182,7 @@ export default function ProductDetailsPage() {
   const handleBuyNow = () => {
     if (product && selectedSize && selectedColor) {
       handleAddToCart();
-      router.push("/cart");
+      router.push("/customer/cart");
     }
   };
 
@@ -207,7 +207,7 @@ export default function ProductDetailsPage() {
         <div className="text-center">
           <h1 className="text-2xl font-bold text-gray-900 mb-4">Produto não encontrado</h1>
           <button
-            onClick={() => router.push("/catalog")}
+            onClick={() => router.push("/customer/catalog")}
             className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-6 py-3 rounded-md transition-colors"
           >
             Voltar ao Catálogo
@@ -267,7 +267,7 @@ export default function ProductDetailsPage() {
 
               {/* Carrinho */}
               <div
-                onClick={() => router.push("/cart")}
+                onClick={() => router.push("/customer/cart")}
                 className="flex items-center gap-2 cursor-pointer text-gray-700 hover:text-gray-900 transition-colors duration-200 relative"
               >
                 <svg

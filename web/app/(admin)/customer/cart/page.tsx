@@ -180,7 +180,7 @@ export default function CartPage() {
                   Adicione produtos ao carrinho para continuar.
                 </p>
                 <Link
-                  href="/catalog"
+                  href="/customer/catalog"
                   className="mt-4 inline-block bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200"
                 >
                   Voltar ao Catálogo
@@ -221,13 +221,13 @@ export default function CartPage() {
 
                   <div className="space-y-3">
                     <Link
-                      href="/catalog"
+                      href="/customer/catalog"
                       className="block w-full text-center border-2 border-blue-300 text-blue-600 font-medium py-3 px-4 rounded-md hover:bg-blue-50 transition-colors duration-200"
                     >
                       Voltar ao Catálogo
                     </Link>
                     <Link
-                      href="/checkout"
+                      href="/customer/checkout"
                       className="block w-full text-center bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-md transition-colors duration-200"
                     >
                       Ir para Fazer Pedido

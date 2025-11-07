@@ -117,7 +117,7 @@ export default function CheckoutPage() {
   // Redirecionar se o carrinho estiver vazio
   useEffect(() => {
     if (items.length === 0) {
-      router.push("/cart");
+      router.push("/customer/cart");
     }
   }, [items, router]);
 
@@ -146,7 +146,7 @@ export default function CheckoutPage() {
             {/* Lado Direito - Navegação e Usuário */}
             <div className="flex items-center gap-6">
               <Link
-                href="/cart"
+                href="/customer/cart"
                 className="text-gray-900 hover:text-gray-700 transition-colors duration-200 font-medium"
               >
                 Carrinho
@@ -426,7 +426,7 @@ export default function CheckoutPage() {
                   Resumo do Pedido
                 </h2>
                 <Link
-                  href="/cart"
+                  href="/customer/cart"
                   className="text-blue-600 hover:text-blue-700 text-sm font-medium"
                 >
                   Editar Carrinho
@@ -482,13 +482,13 @@ export default function CheckoutPage() {
               {/* Botões de Ação */}
               <div className="space-y-3">
                 <Link
-                  href="/cart"
+                  href="/customer/cart"
                   className="block w-full text-center bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium py-3 px-4 rounded-md transition-colors duration-200"
                 >
                   Voltar ao Carrinho
                 </Link>
                 <Link
-                  href="/payment"
+                  href="/customer/payment"
                   className="block w-full text-center bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-md transition-colors duration-200"
                 >
                   Ir para Pagamento

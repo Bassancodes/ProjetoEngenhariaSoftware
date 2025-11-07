@@ -26,7 +26,7 @@ export default function PaymentPage() {
   // Redirecionar se o carrinho estiver vazio
   useEffect(() => {
     if (items.length === 0 && !paymentConfirmed) {
-      router.push("/checkout");
+      router.push("/customer/checkout");
     }
   }, [items, router, paymentConfirmed]);
 
@@ -35,7 +35,7 @@ export default function PaymentPage() {
     // Limpar carrinho após 3 segundos e redirecionar
     setTimeout(() => {
       clearCart();
-      router.push("/catalog");
+      router.push("/customer/catalog");
     }, 3000);
   };
 
@@ -131,7 +131,7 @@ export default function PaymentPage() {
             </div>
 
             <Link
-              href="/catalog"
+              href="/customer/catalog"
               className="inline-block bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-8 rounded-md transition-colors duration-200"
             >
               Voltar ao Catálogo
@@ -163,13 +163,13 @@ export default function PaymentPage() {
             {/* Lado Direito - Navegação e Usuário */}
             <div className="flex items-center gap-6">
               <Link
-                href="/cart"
+                href="/customer/cart"
                 className="text-gray-900 hover:text-gray-700 transition-colors duration-200 font-medium"
               >
                 Carrinho
               </Link>
               <Link
-                href="/checkout"
+                href="/customer/checkout"
                 className="text-gray-900 hover:text-gray-700 transition-colors duration-200 font-medium"
               >
                 Checkout
@@ -289,7 +289,7 @@ export default function PaymentPage() {
             {/* Botões de Ação */}
             <div className="space-y-3">
               <Link
-                href="/checkout"
+                href="/customer/checkout"
                 className="block w-full text-center bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium py-3 px-4 rounded-md transition-colors duration-200"
               >
                 Voltar ao Checkout
@@ -298,7 +298,7 @@ export default function PaymentPage() {
                 onClick={handleSimulatePayment}
                 className="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-4 rounded-md transition-colors duration-200"
               >
-                Simular Pagamento Confirmado
+               Confirmar Pagamento
               </button>
             </div>
           </div>

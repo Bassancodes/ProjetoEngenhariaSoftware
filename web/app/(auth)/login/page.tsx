@@ -1,4 +1,8 @@
+"use client";
+
+import { useRouter } from "next/navigation";
 export default function LoginPage() {
+  const router = useRouter();
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
       {/* Header */}
@@ -47,6 +51,7 @@ export default function LoginPage() {
             <button
               type="button"
               className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-md transition-colors duration-200"
+              onClick={() => router.push("customer/catalog")}
             >
               ENTRAR COMO CLIENTE
             </button>

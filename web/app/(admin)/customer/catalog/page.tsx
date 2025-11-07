@@ -3,8 +3,8 @@
 import Image from "next/image";
 import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import Filters from "../customer/catalog/Filters";
-import { Product, FilterState } from "../customer/catalog/types";
+import Filters from "./Filters";
+import { Product, FilterState } from "./types";
 import { useCart } from "@/context/CartContext";
 
 export default function CatalogPage() {
@@ -177,7 +177,7 @@ export default function CatalogPage() {
 
       // Filtro de tamanho
       if (filters.sizes.length > 0) {
-        const hasMatchingSize = filters.sizes.some((size: string) =>
+        const hasMatchingSize = filters.sizes.some((size) =>
           product.sizes.includes(size)
         );
         if (!hasMatchingSize) return false;
@@ -185,7 +185,7 @@ export default function CatalogPage() {
 
       // Filtro de cor
       if (filters.colors.length > 0) {
-        const hasMatchingColor = filters.colors.some((color: string) =>
+        const hasMatchingColor = filters.colors.some((color) =>
           product.colors.includes(color)
         );
         if (!hasMatchingColor) return false;
@@ -299,7 +299,7 @@ export default function CatalogPage() {
 
               {/* Carrinho */}
               <div
-                onClick={() => router.push("/cart")}
+                onClick={() => router.push("/customer/cart")}
                 className="flex items-center gap-2 cursor-pointer text-gray-700 hover:text-gray-900 transition-colors duration-200 relative"
               >
                 <svg
@@ -382,7 +382,7 @@ export default function CatalogPage() {
                   >
                     {/* Imagem do Produto - Clicável */}
                     <div 
-                      onClick={() => router.push(`/productDetails/${product.id}`)}
+                      onClick={() => router.push(`/customer/productDetails/${product.id}`)}
                       className="w-full h-64 bg-gray-100 relative overflow-hidden cursor-pointer"
                     >
                       <Image
@@ -412,7 +412,7 @@ export default function CatalogPage() {
 
                       {/* Nome do Produto - Clicável */}
                       <h3 
-                        onClick={() => router.push(`/productDetails/${product.id}`)}
+                        onClick={() => router.push(`/customer/productDetails/${product.id}`)}
                         className="text-lg font-medium text-gray-900 mb-3 cursor-pointer hover:text-blue-600 transition-colors"
                       >
                         {product.name}
@@ -492,7 +492,7 @@ export default function CatalogPage() {
                 Tamanho
               </label>
               <div className="grid grid-cols-4 gap-2">
-                {selectedProduct.sizes.map((size: string) => (
+                {selectedProduct.sizes.map((size) => (
                   <button
                     key={size}
                     onClick={() => setSelectedSize(size)}
@@ -514,7 +514,7 @@ export default function CatalogPage() {
                 Cor
               </label>
               <div className="flex flex-wrap gap-2">
-                {selectedProduct.colors.map((color: string) => (
+                {selectedProduct.colors.map((color) => (
                   <button
                     key={color}
                     onClick={() => setSelectedColor(color)}
