@@ -1,4 +1,131 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+
 export default function RegisterPage() {
+  const router = useRouter();
+  const [formData, setFormData] = useState({
+    fullName: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+    accountType: "",
+    endereco: "",
+    empresa: "",
+    terms: false,
+  });
+
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isLoading, setIsLoading] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value, type } = e.target;
+    const checked = (e.target as HTMLInputElement).checked;
+
+    setFormData((prev) => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value,
+    }));
+
+    // Limpar erro do campo quando o usuário começar a digitar
+    if (errors[name]) {
+      setErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors[name];
+        return newErrors;
+      });
+    }
+  };
+
+  const validateForm = () => {
+    const newErrors: Record<string, string> = {};
+
+    if (!formData.fullName.trim()) {
+      newErrors.fullName = "Nome completo é obrigatório";
+    }
+
+    if (!formData.email.trim()) {
+      newErrors.email = "Email é obrigatório";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      newErrors.email = "Email inválido";
+    }
+
+    if (!formData.password) {
+      newErrors.password = "Senha é obrigatória";
+    } else if (formData.password.length < 6) {
+      newErrors.password = "A senha deve ter no mínimo 6 caracteres";
+    }
+
+    if (!formData.confirmPassword) {
+      newErrors.confirmPassword = "Confirmação de senha é obrigatória";
+    } else if (formData.password !== formData.confirmPassword) {
+      newErrors.confirmPassword = "As senhas não coincidem";
+    }
+
+    if (!formData.accountType) {
+      newErrors.accountType = "Selecione o tipo de conta";
+    }
+
+    if (!formData.terms) {
+      newErrors.terms = "Você deve aceitar os termos e condições";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!validateForm()) {
+      return;
+    }
+
+    setIsLoading(true);
+    setSuccessMessage("");
+    setErrors({});
+
+    try {
+      const response = await fetch("/api/cadastro", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          fullName: formData.fullName,
+          email: formData.email,
+          password: formData.password,
+          confirmPassword: formData.confirmPassword,
+          accountType: formData.accountType,
+          endereco: formData.endereco || undefined,
+          empresa: formData.empresa || undefined,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Erro ao criar conta");
+      }
+
+      setSuccessMessage("Conta criada com sucesso! Redirecionando...");
+
+      // Redirecionar após 2 segundos
+      setTimeout(() => {
+        router.push("/login");
+      }, 2000);
+    } catch (error: any) {
+      setErrors({
+        submit: error.message || "Erro ao criar conta. Tente novamente.",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col">
       {/* Header */}
@@ -17,8 +144,22 @@ export default function RegisterPage() {
             <p className="text-gray-600">Preencha os campos abaixo para criar seu perfil.</p>
           </div>
 
+          {/* Success Message */}
+          {successMessage && (
+            <div className="mb-6 p-4 bg-green-100 border border-green-400 text-green-700 rounded-md">
+              {successMessage}
+            </div>
+          )}
+
+          {/* Error Message */}
+          {errors.submit && (
+            <div className="mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded-md">
+              {errors.submit}
+            </div>
+          )}
+
           {/* Form */}
-          <form className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-6">
             {/* Form Fields in 2 Columns */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Left Column */}
@@ -31,9 +172,17 @@ export default function RegisterPage() {
                   <input
                     type="text"
                     id="fullName"
+                    name="fullName"
+                    value={formData.fullName}
+                    onChange={handleChange}
                     placeholder="Seu nome completo"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black"
+                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black ${
+                      errors.fullName ? "border-red-500" : "border-gray-300"
+                    }`}
                   />
+                  {errors.fullName && (
+                    <p className="mt-1 text-sm text-red-600">{errors.fullName}</p>
+                  )}
                 </div>
 
                 {/* Password Field */}
@@ -44,9 +193,17 @@ export default function RegisterPage() {
                   <input
                     type="password"
                     id="password"
+                    name="password"
+                    value={formData.password}
+                    onChange={handleChange}
                     placeholder="••••••••"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black"
+                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black ${
+                      errors.password ? "border-red-500" : "border-gray-300"
+                    }`}
                   />
+                  {errors.password && (
+                    <p className="mt-1 text-sm text-red-600">{errors.password}</p>
+                  )}
                 </div>
 
                 {/* Account Type Field */}
@@ -57,7 +214,12 @@ export default function RegisterPage() {
                   <div className="relative">
                     <select
                       id="accountType"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none bg-white text-black"
+                      name="accountType"
+                      value={formData.accountType}
+                      onChange={handleChange}
+                      className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none bg-white text-black ${
+                        errors.accountType ? "border-red-500" : "border-gray-300"
+                      }`}
                     >
                       <option value="">Selecione seu perfil</option>
                       <option value="cliente">Cliente</option>
@@ -79,7 +241,46 @@ export default function RegisterPage() {
                       </svg>
                     </div>
                   </div>
+                  {errors.accountType && (
+                    <p className="mt-1 text-sm text-red-600">{errors.accountType}</p>
+                  )}
                 </div>
+
+                {/* Endereco Field - Only for Cliente */}
+                {formData.accountType === "cliente" && (
+                  <div>
+                    <label htmlFor="endereco" className="block text-sm font-medium text-gray-700 mb-2">
+                      Endereço (Opcional)
+                    </label>
+                    <input
+                      type="text"
+                      id="endereco"
+                      name="endereco"
+                      value={formData.endereco}
+                      onChange={handleChange}
+                      placeholder="Seu endereço completo"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black"
+                    />
+                  </div>
+                )}
+
+                {/* Empresa Field - Only for Lojista */}
+                {formData.accountType === "lojista" && (
+                  <div>
+                    <label htmlFor="empresa" className="block text-sm font-medium text-gray-700 mb-2">
+                      Nome da Empresa (Opcional)
+                    </label>
+                    <input
+                      type="text"
+                      id="empresa"
+                      name="empresa"
+                      value={formData.empresa}
+                      onChange={handleChange}
+                      placeholder="Nome da sua empresa"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black"
+                    />
+                  </div>
+                )}
               </div>
 
               {/* Right Column */}
@@ -92,9 +293,17 @@ export default function RegisterPage() {
                   <input
                     type="email"
                     id="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
                     placeholder="seu.email@exemplo.com"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black"
+                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black ${
+                      errors.email ? "border-red-500" : "border-gray-300"
+                    }`}
                   />
+                  {errors.email && (
+                    <p className="mt-1 text-sm text-red-600">{errors.email}</p>
+                  )}
                 </div>
 
                 {/* Confirm Password Field */}
@@ -105,9 +314,17 @@ export default function RegisterPage() {
                   <input
                     type="password"
                     id="confirmPassword"
+                    name="confirmPassword"
+                    value={formData.confirmPassword}
+                    onChange={handleChange}
                     placeholder="••••••••"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black"
+                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black ${
+                      errors.confirmPassword ? "border-red-500" : "border-gray-300"
+                    }`}
                   />
+                  {errors.confirmPassword && (
+                    <p className="mt-1 text-sm text-red-600">{errors.confirmPassword}</p>
+                  )}
                 </div>
               </div>
             </div>
@@ -117,31 +334,42 @@ export default function RegisterPage() {
               <input
                 type="checkbox"
                 id="terms"
-                className="mt-1 mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                name="terms"
+                checked={formData.terms}
+                onChange={handleChange}
+                className={`mt-1 mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded ${
+                  errors.terms ? "border-red-500" : ""
+                }`}
               />
               <label htmlFor="terms" className="text-sm text-gray-700">
                 Li e aceito os Termos e Condições.
               </label>
             </div>
+            {errors.terms && (
+              <p className="text-sm text-red-600 -mt-4">{errors.terms}</p>
+            )}
 
             {/* Create Account Button */}
             <div>
               <button
-                type="button"
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-md transition-colors duration-200"
+                type="submit"
+                disabled={isLoading}
+                className={`w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-md transition-colors duration-200 ${
+                  isLoading ? "opacity-50 cursor-not-allowed" : ""
+                }`}
               >
-                CRIAR CONTA
+                {isLoading ? "CRIANDO CONTA..." : "CRIAR CONTA"}
               </button>
             </div>
 
             {/* Login Link */}
             <div className="text-center">
-              <a
+              <Link
                 href="/login"
                 className="text-blue-600 hover:text-blue-800 text-sm transition-colors duration-200"
               >
                 Já tenho conta <span className="font-semibold">&gt; Entrar</span>
-              </a>
+              </Link>
             </div>
           </form>
         </div>
