@@ -1,15 +1,137 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
-generator client {
-  provider = "prisma-client"
-  output   = "../app/generated/prisma"
-}
-
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+ 
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "rhel-openssl-3.0.x", "debian-openssl-3.0.x"]
+}
+
+enum TipoUsuario {
+  CLIENTE
+  LOJISTA
+}
+
+model Usuario {
+  id String @id @default(uuid())
+  nome String
+  email String @unique
+  senha String
+  tipoUsuario TipoUsuario
+  cliente Cliente?
+  lojista Lojista?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Cliente {
+  id Int @id @default(autoincrement())
+  endereco String
+  usuario Usuario @relation(fields: [usuarioId], references: [id])
+  usuarioId String @unique
+  pedidos Pedido[]
+  carrinhos Carrinho[]
+  pagamentos Pagamento[]
+}
+
+model Lojista {
+  id Int @id @default(autoincrement())
+  empresa String
+  usuario Usuario @relation(fields: [usuarioId], references: [id])
+  usuarioId String @unique
+  pedidos Pedido[]
+}
+
+model Produto {
+  id Int @id @default(autoincrement())
+  nome String
+  preco Decimal
+  categoria Categoria @relation(fields: [categoriaId], references: [id])
+  categoriaId Int
+  descricao String?
+  itensPedido ItemPedido[]
+  itensCarrinho ItemCarrinho[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Categoria {
+  id Int @id @default(autoincrement())
+  nome String
+  descricao String?
+  produtos Produto[]
+}
+
+model Pedido {
+  id Int @id @default(autoincrement())
+  cliente Cliente @relation(fields: [clienteId], references: [id])
+  clienteId Int
+  lojista Lojista @relation(fields: [lojistaId], references: [id])
+  lojistaId Int
+  itensPedido ItemPedido[]
+  status PedidoStatus
+  pagamentos Pagamento[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum PedidoStatus {
+  PENDENTE_PAGAMENTO
+  PENDENTE_ENVIO
+  EM_TRANSITO
+  ENTREGUE
+  CANCELADO
+}
+
+model Carrinho {
+  id Int @id @default(autoincrement())
+  cliente Cliente @relation(fields: [clienteId], references: [id])
+  clienteId Int
+  itensCarrinho ItemCarrinho[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ItemPedido {
+  id Int @id @default(autoincrement())
+  pedido Pedido @relation(fields: [pedidoId], references: [id])
+  pedidoId Int
+  produto Produto @relation(fields: [produtoId], references: [id])
+  produtoId Int
+  quantidade Int
+  precoUnitario Decimal
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ItemCarrinho {
+  id Int @id @default(autoincrement())
+  carrinho Carrinho @relation(fields: [carrinhoId], references: [id])
+  carrinhoId Int
+  produto Produto @relation(fields: [produtoId], references: [id])
+  produtoId Int
+  quantidade Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Pagamento {
+  id Int @id @default(autoincrement())
+  pedido Pedido @relation(fields: [pedidoId], references: [id])
+  pedidoId Int
+  valor Decimal
+  tipoPagamento String
+  status PagamentoStatus
+  cliente Cliente @relation(fields: [clienteId], references: [id])
+  clienteId Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum PagamentoStatus {
+  PENDENTE
+  PAGO
+  CANCELADO
+}
+

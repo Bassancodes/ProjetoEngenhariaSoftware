@@ -6,9 +6,19 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "services:up": "docker compose -p baxeinwear -f infra/compose.yaml up -d",
+    "services:stop": "docker compose -p baxeinwear -f infra/compose.yaml stop",
+    "services:down": "docker compose -p baxeinwear -f infra/compose.yaml down",
+    "prisma:studio": "dotenv -e .env.development  -- npx prisma studio --schema=infra/prisma/schema.prisma",
+    "prisma:migrate:deploy": "dotenv -e .env.development -- npx prisma migrate deploy --schema=infra/prisma/schema.prisma",
+    "prisma:generate": "dotenv -e .env.development -- npx prisma generate --schema=infra/prisma/schema.prisma",
+    "prisma:migrate:dev": "dotenv -e .env.development -- npx prisma migrate dev --schema=infra/prisma/schema.prisma",
+    "prisma:reset": "npm run services:down && npm run services:up && npm run prisma:migrate:deploy && npm run prisma:generate"
   },
   "dependencies": {
+    "@prisma/client": "^6.0.0",
+    "axios": "^1.13.2",
     "next": "16.0.1",
     "qrcode.react": "^4.2.0",
     "react": "19.2.0",
@@ -19,9 +29,12 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "dotenv-cli": "^11.0.0",
     "eslint": "^9",
     "eslint-config-next": "16.0.1",
+    "prisma": "^6.19.0",
     "tailwindcss": "^4",
+    "tsx": "^4.20.6",
     "typescript": "^5"
   }
 }
