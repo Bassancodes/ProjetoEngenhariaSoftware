@@ -41,6 +41,7 @@ model Lojista {
   usuario Usuario @relation(fields: [usuarioId], references: [id])
   usuarioId String @unique
   pedidos Pedido[]
+  produtos Produto[]
 }
 
 model Produto {
@@ -52,6 +53,8 @@ model Produto {
   descricao String?
   itensPedido ItemPedido[]
   itensCarrinho ItemCarrinho[]
+  lojista Lojista @relation(fields: [lojistaId], references: [id])
+  lojistaId Int
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -134,4 +137,6 @@ enum PagamentoStatus {
   PAGO
   CANCELADO
 }
+
+
 
