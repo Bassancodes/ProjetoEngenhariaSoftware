@@ -6,9 +6,11 @@ import { useRouter } from "next/navigation";
 import Filters from "./Filters";
 import { Product, FilterState } from "./types";
 import { useCart } from "@/context/CartContext";
+import { useAuth } from "@/context/AuthContext";
 
 export default function CatalogPage() {
   const router = useRouter();
+  const { logout } = useAuth();
   const { addToCart, getItemCount } = useCart();
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [selectedSize, setSelectedSize] = useState<string>("");
@@ -262,7 +264,10 @@ export default function CatalogPage() {
             <div className="flex items-center gap-4">
               {/* Botão Sair */}
               <button 
-                onClick={() => router.push("/login")}
+                onClick={() => {
+                  logout();
+                  router.push("/login");
+                }}
                 className="bg-red-600 hover:bg-red-700 text-white font-medium px-4 py-2 rounded-md transition-colors duration-200"
               >
                 Sair

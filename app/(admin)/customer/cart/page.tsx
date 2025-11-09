@@ -1,11 +1,25 @@
 "use client";
 
 import Image from "next/image";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { useCart } from "@/context/CartContext";
+import { useAuth } from "@/context/AuthContext";
 import Link from "next/link";
 
 export default function CartPage() {
+  const router = useRouter();
+  const { isAuthenticated, isLoading, logout } = useAuth();
   const { items, removeFromCart, updateQuantity, getTotalPrice } = useCart();
+
+  // Função para lidar com o clique no botão "Ir para Fazer Pedido"
+  const handleCheckoutClick = () => {
+    if (!isAuthenticated) {
+      router.push("/login");
+      return;
+    }
+    router.push("/customer/checkout");
+  };
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat("pt-BR", {
@@ -39,7 +53,13 @@ export default function CartPage() {
             {/* Lado Direito - Ações */}
             <div className="flex items-center gap-4">
               {/* Botão Sair */}
-              <button className="bg-red-600 hover:bg-red-700 text-white font-medium px-4 py-2 rounded-md transition-colors duration-200">
+              <button 
+                onClick={() => {
+                  logout();
+                  router.push("/login");
+                }}
+                className="bg-red-600 hover:bg-red-700 text-white font-medium px-4 py-2 rounded-md transition-colors duration-200"
+              >
                 Sair
               </button>
 
@@ -226,12 +246,12 @@ export default function CartPage() {
                     >
                       Voltar ao Catálogo
                     </Link>
-                    <Link
-                      href="/customer/checkout"
+                    <button
+                      onClick={handleCheckoutClick}
                       className="block w-full text-center bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-md transition-colors duration-200"
                     >
                       Ir para Fazer Pedido
-                    </Link>
+                    </button>
                   </div>
                 </>
               ) : (

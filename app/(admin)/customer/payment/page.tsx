@@ -4,10 +4,12 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useCart } from "@/context/CartContext";
+import { useAuth } from "@/context/AuthContext";
 import { QRCodeSVG } from "qrcode.react";
 
 export default function PaymentPage() {
   const router = useRouter();
+  const { isAuthenticated, isLoading } = useAuth();
   const { items, getTotalPrice, clearCart } = useCart();
   const [paymentConfirmed, setPaymentConfirmed] = useState(false);
   const [orderNumber] = useState(() => `PED-${Date.now()}`);
@@ -23,12 +25,19 @@ export default function PaymentPage() {
   const shipping = 15.0; // Valor padrão, pode ser ajustado
   const total = subtotal + shipping;
 
+  // Redirecionar para login se não estiver autenticado
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      router.push("/login");
+    }
+  }, [isAuthenticated, isLoading, router]);
+
   // Redirecionar se o carrinho estiver vazio
   useEffect(() => {
-    if (items.length === 0 && !paymentConfirmed) {
+    if (isAuthenticated && items.length === 0 && !paymentConfirmed) {
       router.push("/customer/checkout");
     }
-  }, [items, router, paymentConfirmed]);
+  }, [items, router, paymentConfirmed, isAuthenticated]);
 
   const handleSimulatePayment = () => {
     setPaymentConfirmed(true);
@@ -39,7 +48,8 @@ export default function PaymentPage() {
     }, 3000);
   };
 
-  if (items.length === 0 && !paymentConfirmed) {
+  // Não renderizar nada enquanto verifica autenticação ou redireciona
+  if (isLoading || !isAuthenticated || (items.length === 0 && !paymentConfirmed)) {
     return null;
   }
 

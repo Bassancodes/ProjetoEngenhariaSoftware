@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useCart } from "@/context/CartContext";
+import { useAuth } from "@/context/AuthContext";
 
 interface CheckoutFormData {
   cep: string;
@@ -22,6 +23,7 @@ interface CheckoutFormData {
 
 export default function CheckoutPage() {
   const router = useRouter();
+  const { isAuthenticated, isLoading } = useAuth();
   const { items, getTotalPrice } = useCart();
   const [formData, setFormData] = useState<CheckoutFormData>({
     cep: "",
@@ -114,14 +116,22 @@ export default function CheckoutPage() {
   const shipping = formData.shippingOption === "pac" ? 15.0 : 25.0;
   const total = subtotal + shipping;
 
+  // Redirecionar para login se não estiver autenticado
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      router.push("/login");
+    }
+  }, [isAuthenticated, isLoading, router]);
+
   // Redirecionar se o carrinho estiver vazio
   useEffect(() => {
-    if (items.length === 0) {
+    if (isAuthenticated && items.length === 0) {
       router.push("/customer/cart");
     }
-  }, [items, router]);
+  }, [items, router, isAuthenticated]);
 
-  if (items.length === 0) {
+  // Não renderizar nada enquanto verifica autenticação ou redireciona
+  if (isLoading || !isAuthenticated || items.length === 0) {
     return null;
   }
 
