@@ -13,7 +13,7 @@ const FALLBACK_IMAGE = "/placeholder.png";
 
 export default function CartPage() {
   const router = useRouter();
-  const { isAuthenticated, isLoading, user } = useAuth();
+  const { isAuthenticated } = useAuth();
   const {
     items,
     removeFromCart,

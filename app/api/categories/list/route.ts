@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
 // GET /api/categories/list - Listar todas as categorias
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     const categorias = await prisma.categoria.findMany({
       orderBy: {
@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
       },
       { status: 200 }
     )
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Erro ao listar categorias:', error)
     
     return NextResponse.json(

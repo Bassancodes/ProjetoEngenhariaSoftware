@@ -1,13 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
-function formatDecimal(value: any) {
+function formatDecimal(value: unknown) {
   if (typeof value === 'number') return value
   if (typeof value === 'string') {
     const parsed = Number.parseFloat(value)
     return Number.isNaN(parsed) ? 0 : parsed
   }
-  return Number(value) || 0
+  if (value == null) return 0
+  if (typeof value === 'bigint') return Number(value)
+  return 0
 }
 
 function translateStatus(status: string) {

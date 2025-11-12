@@ -22,13 +22,15 @@ const DEFAULT_SIZE = 'Único'
 const DEFAULT_COLOR = 'Padrão'
 const PLACEHOLDER_IMAGE = '/placeholder.png'
 
-const formatProductPrice = (preco: any) => {
+const formatProductPrice = (preco: unknown): number => {
   if (typeof preco === 'number') return preco
   if (typeof preco === 'string') {
     const parsed = Number.parseFloat(preco)
     return Number.isNaN(parsed) ? 0 : parsed
   }
-  return Number(preco) || 0
+  if (preco == null) return 0
+  if (typeof preco === 'bigint') return Number(preco)
+  return 0
 }
 
 function normalizeCartItems(items: CartItemPayload[]): NormalizedCartItem[] {
@@ -74,7 +76,7 @@ function formatCartItem(
     produto: {
       id: number
       nome: string
-      preco: any
+      preco: number | string | null
       categoria: { nome: string }
       imagens: Array<{ url: string }>
     }
@@ -320,12 +322,18 @@ export async function POST(request: NextRequest) {
         },
         { status: 200 }
       )
-    } catch (error: any) {
-      console.error('Erro ao salvar carrinho:', error)
-  
-      if (error?.message && error.message.includes('Item inválido')) {
+  } catch (error: unknown) {
+    console.error('Erro ao salvar carrinho:', error)
+
+    if (
+      typeof error === 'object' &&
+      error !== null &&
+      'message' in error &&
+      typeof (error as { message?: unknown }).message === 'string' &&
+      (error as { message: string }).message.includes('Item inválido')
+    ) {
         return NextResponse.json(
-          { error: error.message },
+        { error: (error as { message: string }).message },
           { status: 400 }
         )
       }

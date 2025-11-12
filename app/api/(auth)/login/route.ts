@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Retornar resposta sem a senha
-    const { senha, ...usuarioSemSenha } = usuario
+    const { senha: _senha, ...usuarioSemSenha } = usuario
 
     return NextResponse.json(
       {
@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
       },
       { status: 200 }
     )
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Erro ao fazer login:', error)
     
     return NextResponse.json(

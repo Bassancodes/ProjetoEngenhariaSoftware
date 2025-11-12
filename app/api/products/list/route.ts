@@ -140,7 +140,7 @@ export async function GET(request: NextRequest) {
       { error: 'Tipo de usuário inválido' },
       { status: 400 }
     )
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Erro ao listar produtos:', error)
     
     return NextResponse.json(

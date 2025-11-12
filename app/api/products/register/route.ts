@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { Prisma } from '@prisma/client'
 
 // POST /api/products/register - Criar produto (apenas lojistas)
 export async function POST(request: NextRequest) {
@@ -77,7 +78,7 @@ export async function POST(request: NextRequest) {
     const lojistaId = usuario.lojista.id
 
     // Validar imagens se fornecidas
-    let imagensValidadas: Array<{ url: string; ordem: number }> = []
+    const imagensValidadas: Array<{ url: string; ordem: number }> = []
     if (imagens && Array.isArray(imagens)) {
       // Validar cada URL de imagem
       for (let i = 0; i < imagens.length; i++) {
@@ -152,18 +153,18 @@ export async function POST(request: NextRequest) {
       },
       { status: 201 }
     )
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Erro ao criar produto:', error)
     
     // Retornar mensagem de erro mais específica
-    if (error.code === 'P2002') {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
       return NextResponse.json(
         { error: 'Já existe um produto com este nome' },
         { status: 409 }
       )
     }
     
-    if (error.code === 'P2003') {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2003') {
       return NextResponse.json(
         { error: 'Categoria ou lojista não encontrado' },
         { status: 404 }
@@ -171,14 +172,20 @@ export async function POST(request: NextRequest) {
     }
     
     // Retornar mensagem de erro detalhada em desenvolvimento
-    const errorMessage = process.env.NODE_ENV === 'development' 
-      ? error.message || 'Erro ao criar produto. Tente novamente.'
+    const isDev = process.env.NODE_ENV === 'development'
+    const errorMessage = isDev
+      ? (typeof error === 'object' &&
+          error !== null &&
+          'message' in error &&
+          typeof (error as { message?: unknown }).message === 'string'
+            ? (error as { message: string }).message
+            : 'Erro ao criar produto. Tente novamente.')
       : 'Erro ao criar produto. Tente novamente.'
     
     return NextResponse.json(
       { 
         error: errorMessage,
-        ...(process.env.NODE_ENV === 'development' && { details: error })
+        ...(isDev && { details: error })
       },
       { status: 500 }
     )

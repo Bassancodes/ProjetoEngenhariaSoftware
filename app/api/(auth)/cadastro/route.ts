@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { Prisma } from '@prisma/client'
 
 // POST /api/cadastro - Criar novo usuário com perfil (Cliente ou Lojista)
 export async function POST(request: NextRequest) {
@@ -7,7 +8,7 @@ export async function POST(request: NextRequest) {
     let body
     try {
       body = await request.json()
-    } catch (parseError) {
+    } catch {
       return NextResponse.json(
         { error: 'Formato JSON inválido no corpo da requisição' },
         { status: 400 }
@@ -121,7 +122,7 @@ export async function POST(request: NextRequest) {
     })
 
     // Retornar resposta sem a senha
-    const { senha, ...usuarioSemSenha } = resultado.usuario
+    const { senha: _senha, ...usuarioSemSenha } = resultado.usuario
 
     return NextResponse.json(
       {
@@ -132,47 +133,62 @@ export async function POST(request: NextRequest) {
       },
       { status: 201 }
     )
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Erro ao criar usuário:', error)
-    
-    // Erro de constraint única (email duplicado)
-    if (error.code === 'P2002') {
-      const campo = error.meta?.target?.[0] || 'campo'
-      return NextResponse.json(
-        { error: `${campo === 'email' ? 'Email' : 'Campo'} já cadastrado` },
-        { status: 409 }
-      )
+    // Erros conhecidos do Prisma (constraints, validação, etc.)
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === 'P2002') {
+        const meta = error.meta as { target?: string[] } | undefined
+        const campo = meta?.target?.[0] || 'campo'
+        return NextResponse.json(
+          { error: `${campo === 'email' ? 'Email' : 'Campo'} já cadastrado` },
+          { status: 409 }
+        )
+      }
+      if (error.code === 'P2003') {
+        return NextResponse.json(
+          { error: 'Erro de referência: registro relacionado não encontrado' },
+          { status: 400 }
+        )
+      }
     }
-    
-    // Erro de validação do Prisma
-    if (error.code === 'P2003') {
-      return NextResponse.json(
-        { error: 'Erro de referência: registro relacionado não encontrado' },
-        { status: 400 }
-      )
+    // Erros de conexão (inicialização)
+    const hasCode =
+      typeof error === 'object' &&
+      error !== null &&
+      'code' in error &&
+      typeof (error as { code?: unknown }).code === 'string'
+    if (hasCode) {
+      const code = (error as { code: string }).code
+      if (code === 'P1001' || code === 'P1017') {
+        return NextResponse.json(
+          { error: 'Erro de conexão com o banco de dados. Tente novamente mais tarde.' },
+          { status: 503 }
+        )
+      }
     }
-    
-    // Erro de conexão com o banco
-    if (error.code === 'P1001' || error.code === 'P1017') {
-      return NextResponse.json(
-        { error: 'Erro de conexão com o banco de dados. Tente novamente mais tarde.' },
-        { status: 503 }
-      )
-    }
-    
     // Em desenvolvimento, retornar mais detalhes do erro
     const isDevelopment = process.env.NODE_ENV === 'development'
-    const errorMessage = isDevelopment 
-      ? error.message || 'Erro desconhecido ao criar usuário'
-      : 'Erro ao criar usuário. Tente novamente.'
-    
+    const message =
+      typeof error === 'object' &&
+      error !== null &&
+      'message' in error &&
+      typeof (error as { message?: unknown }).message === 'string'
+        ? (error as { message: string }).message
+        : 'Erro desconhecido ao criar usuário'
     return NextResponse.json(
-      { 
-        error: errorMessage,
-        ...(isDevelopment && { 
-          details: error.code ? `Código: ${error.code}` : undefined,
-          stack: error.stack 
-        })
+      {
+        error: isDevelopment ? message : 'Erro ao criar usuário. Tente novamente.',
+        ...(isDevelopment && {
+          details: hasCode ? `Código: ${(error as { code: string }).code}` : undefined,
+          stack:
+            typeof error === 'object' &&
+            error !== null &&
+            'stack' in error &&
+            typeof (error as { stack?: unknown }).stack === 'string'
+              ? (error as { stack: string }).stack
+              : undefined,
+        }),
       },
       { status: 500 }
     )
