@@ -1,132 +1,79 @@
 "use client";
 
 import Image from "next/image";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { useCart } from "@/context/CartContext";
-import { Product } from "@/app/(admin)/customer/catalog/types";
-
-// Dados estáticos dos produtos (mesmo do catálogo, será substituído por API futuramente)
-const allProducts: Product[] = [
-  {
-    id: 1,
-    name: "Calça Legging Feminina",
-    price: 189.99,
-    originalPrice: 229.99,
-    image: "/legging.png",
-    images: ["/legging.png", "/legging.png", "/legging.png"], // Placeholder - usar múltiplas imagens quando disponíveis
-    category: "Calças",
-    sizes: ["P", "M", "G", "GG"],
-    colors: ["Preto", "Cinza", "Branco"],
-    description: "Essencial em qualquer guarda-roupa, nossa calça jeans de lavagem escura é a peça-chave para compor looks que vão do casual ao sofisticado. Com um tom de azul profundo e design atemporal, ela oferece a combinação perfeita de conforto e estilo, adaptando-se a todas as ocasiões do seu dia, do trabalho ao happy hour.",
-    rating: {
-      stars: 5,
-      count: 238,
-    },
-    isBestSeller: true,
-    isOnSale: true,
-    features: ["Qualidade Premium", "Produção Sustentável", "Troca Fácil"],
-  },
-  {
-    id: 2,
-    name: "Camiseta Básica Branca Algodão",
-    price: 79.90,
-    image: "/white-shirt.png",
-    images: ["/white-shirt.png", "/white-shirt.png", "/white-shirt.png"],
-    category: "Camisetas",
-    sizes: ["P", "M", "G", "GG"],
-    colors: ["Branco", "Preto", "Cinza"],
-    description: "A camiseta básica perfeita para o seu guarda-roupa. Feita com 100% algodão de alta qualidade, oferece conforto e durabilidade. Ideal para usar sozinha ou como camada base, combina perfeitamente com qualquer look casual ou esportivo.",
-    rating: {
-      stars: 4,
-      count: 156,
-    },
-    isBestSeller: true,
-    isOnSale: false,
-    features: ["Qualidade Premium", "Produção Sustentável", "Troca Fácil"],
-  },
-  {
-    id: 3,
-    name: "Jaqueta de Couro Masculina Clássica",
-    price: 549.00,
-    originalPrice: 699.00,
-    image: "/leather-jacket.png",
-    images: ["/leather-jacket.png", "/leather-jacket.png", "/leather-jacket.png"],
-    category: "Jaquetas",
-    sizes: ["M", "G", "GG"],
-    colors: ["Preto", "Marrom"],
-    description: "Jaqueta de couro genuíno com design clássico e atemporal. Perfeita para adicionar um toque de estilo e elegância ao seu visual. Com forro interno confortável e acabamento impecável, esta jaqueta é um investimento para durar muitos anos.",
-    rating: {
-      stars: 5,
-      count: 89,
-    },
-    isBestSeller: false,
-    isOnSale: true,
-    features: ["Qualidade Premium", "Produção Sustentável", "Troca Fácil"],
-  },
-  {
-    id: 4,
-    name: "Moletom Canguru com Capuz Cinza",
-    price: 219.50,
-    image: "/grey-sweatshirt.png",
-    images: ["/grey-sweatshirt.png", "/grey-sweatshirt.png", "/grey-sweatshirt.png"],
-    category: "Moletons",
-    sizes: ["P", "M", "G", "GG"],
-    colors: ["Cinza", "Preto"],
-    description: "Moletom confortável e estiloso com capuz e bolso canguru. Perfeito para os dias mais frios ou para um look casual e descontraído. Feito com tecido macio e resistente, garantindo conforto e durabilidade.",
-    rating: {
-      stars: 4,
-      count: 201,
-    },
-    isBestSeller: true,
-    isOnSale: false,
-    features: ["Qualidade Premium", "Produção Sustentável", "Troca Fácil"],
-  },
-  {
-    id: 5,
-    name: "Camisa Polo Preta",
-    price: 129.90,
-    image: "/black-shirt.png",
-    images: ["/black-shirt.png", "/black-shirt.png", "/black-shirt.png"],
-    category: "Camisetas",
-    sizes: ["M", "G", "GG"],
-    colors: ["Preto", "Branco", "Azul"],
-    description: "Camisa polo clássica em tom escuro, perfeita para ocasiões casuais e semi-formais. Com tecido de alta qualidade e corte moderno, oferece conforto e estilo em qualquer situação.",
-    rating: {
-      stars: 4,
-      count: 124,
-    },
-    isBestSeller: false,
-    isOnSale: false,
-    features: ["Qualidade Premium", "Produção Sustentável", "Troca Fácil"],
-  },
-  {
-    id: 6,
-    name: "Bermuda Chino Amarela",
-    price: 159.99,
-    image: "/yellow-short.png",
-    images: ["/yellow-short.png", "/yellow-short.png", "/yellow-short.png"],
-    category: "Bermudas",
-    sizes: ["P", "M", "G"],
-    colors: ["Amarelo", "Bege"],
-    description: "Bermuda chino em cor vibrante, ideal para o verão. Com tecido leve e respirável, oferece conforto e estilo durante os dias mais quentes. Perfeita para praia, esportes ou um look casual moderno.",
-    rating: {
-      stars: 4,
-      count: 67,
-    },
-    isBestSeller: false,
-    isOnSale: false,
-    features: ["Qualidade Premium", "Produção Sustentável", "Troca Fácil"],
-  },
-];
+import { useAuth } from "@/context/AuthContext";
+import { Product, ApiProduct } from "@/app/(admin)/customer/catalog/types";
 
 export default function ProductDetailsPage() {
   const router = useRouter();
   const params = useParams();
   const { addToCart, getItemCount } = useCart();
-  
+  const { user } = useAuth();
+  const [product, setProduct] = useState<Product | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
   const productId = parseInt(params.id as string);
-  const product = allProducts.find((p) => p.id === productId);
+
+  // Função para converter produto da API para o formato do frontend
+  const convertApiProductToProduct = (apiProduct: ApiProduct): Product => {
+    const images = apiProduct.imagens && apiProduct.imagens.length > 0
+      ? apiProduct.imagens.map(img => img.url)
+      : ["/placeholder.png"];
+    
+    const price = typeof apiProduct.preco === 'string' 
+      ? parseFloat(apiProduct.preco) 
+      : Number(apiProduct.preco);
+
+    return {
+      id: apiProduct.id,
+      name: apiProduct.nome,
+      price: price,
+      image: images[0] || "/placeholder.png",
+      images: images,
+      category: apiProduct.categoria.nome,
+      sizes: ["P", "M", "G", "GG"],
+      colors: ["Preto", "Branco", "Cinza"],
+      description: apiProduct.descricao || "",
+      isBestSeller: false,
+      isOnSale: false,
+      features: ["Qualidade Premium", "Produção Sustentável", "Troca Fácil"],
+    };
+  };
+
+  // Buscar produto da API
+  useEffect(() => {
+    const fetchProduct = async () => {
+      setIsLoading(true);
+      try {
+        const url = user?.id 
+          ? `/api/products/list?usuarioId=${user.id}`
+          : `/api/products/list`;
+        
+        const response = await fetch(url);
+        const data = await response.json();
+        
+        if (response.ok && data.produtos) {
+          const apiProduct = data.produtos.find((p: ApiProduct) => p.id === productId);
+          if (apiProduct) {
+            setProduct(convertApiProductToProduct(apiProduct));
+          }
+        } else {
+          console.error("Erro ao carregar produto:", data.error);
+        }
+      } catch (error) {
+        console.error("Erro ao buscar produto:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (productId) {
+      fetchProduct();
+    }
+  }, [productId, user?.id]);
 
   // Estados para seleção
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
@@ -199,6 +146,18 @@ export default function ProductDetailsPage() {
     };
     return colorMap[colorName] || "#CCCCCC";
   };
+
+  // Se está carregando
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Carregando produto...</p>
+        </div>
+      </div>
+    );
+  }
 
   // Se produto não encontrado
   if (!product) {
@@ -319,13 +278,21 @@ export default function ProductDetailsPage() {
           <div>
             {/* Imagem Principal */}
             <div className="w-full aspect-square bg-white rounded-lg shadow-md overflow-hidden mb-2 relative max-h-[550px]">
-              <Image
-                src={mainImage}
-                alt={product.name}
-                fill
-                className="object-cover"
-                sizes="(max-width: 1024px) 100vw, 50vw"
-              />
+              {mainImage && mainImage.startsWith('http') ? (
+                <img
+                  src={mainImage}
+                  alt={product.name}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <Image
+                  src={mainImage}
+                  alt={product.name}
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 1024px) 100vw, 50vw"
+                />
+              )}
             </div>
 
             {/* Galeria de Thumbnails */}
@@ -342,13 +309,21 @@ export default function ProductDetailsPage() {
                   style={selectedImageIndex === index ? { borderColor: '#2784D5' } : {}}
                 >
                   <div className="relative w-full h-full">
-                    <Image
-                      src={img}
-                      alt={`${product.name} - Vista ${index + 1}`}
-                      fill
-                      className="object-cover"
-                      sizes="64px"
-                    />
+                    {img && img.startsWith('http') ? (
+                      <img
+                        src={img}
+                        alt={`${product.name} - Vista ${index + 1}`}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <Image
+                        src={img}
+                        alt={`${product.name} - Vista ${index + 1}`}
+                        fill
+                        className="object-cover"
+                        sizes="64px"
+                      />
+                    )}
                   </div>
                 </button>
               ))}

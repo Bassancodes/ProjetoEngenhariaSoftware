@@ -20,6 +20,25 @@ export interface Product {
   features?: string[]; // Características (Qualidade Premium, Produção Sustentável, etc.)
 }
 
+// Tipo para produto vindo da API
+export interface ApiProduct {
+  id: number;
+  nome: string;
+  preco: number | string;
+  categoria: {
+    id: number;
+    nome: string;
+  };
+  descricao?: string;
+  imagens?: Array<{
+    id: number;
+    url: string;
+    ordem: number;
+  }>;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface FilterState {
   category: string | null;
   priceRange: string | null;

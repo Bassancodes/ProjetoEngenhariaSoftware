@@ -4,7 +4,16 @@ import { prisma } from '@/lib/prisma'
 // POST /api/cadastro - Criar novo usuário com perfil (Cliente ou Lojista)
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json()
+    let body
+    try {
+      body = await request.json()
+    } catch (parseError) {
+      return NextResponse.json(
+        { error: 'Formato JSON inválido no corpo da requisição' },
+        { status: 400 }
+      )
+    }
+    
     const { fullName, email, password, confirmPassword, accountType, endereco, empresa } = body
 
     // Validação dos campos obrigatórios
@@ -126,15 +135,45 @@ export async function POST(request: NextRequest) {
   } catch (error: any) {
     console.error('Erro ao criar usuário:', error)
     
+    // Erro de constraint única (email duplicado)
     if (error.code === 'P2002') {
+      const campo = error.meta?.target?.[0] || 'campo'
       return NextResponse.json(
-        { error: 'Email já cadastrado' },
+        { error: `${campo === 'email' ? 'Email' : 'Campo'} já cadastrado` },
         { status: 409 }
       )
     }
     
+    // Erro de validação do Prisma
+    if (error.code === 'P2003') {
+      return NextResponse.json(
+        { error: 'Erro de referência: registro relacionado não encontrado' },
+        { status: 400 }
+      )
+    }
+    
+    // Erro de conexão com o banco
+    if (error.code === 'P1001' || error.code === 'P1017') {
+      return NextResponse.json(
+        { error: 'Erro de conexão com o banco de dados. Tente novamente mais tarde.' },
+        { status: 503 }
+      )
+    }
+    
+    // Em desenvolvimento, retornar mais detalhes do erro
+    const isDevelopment = process.env.NODE_ENV === 'development'
+    const errorMessage = isDevelopment 
+      ? error.message || 'Erro desconhecido ao criar usuário'
+      : 'Erro ao criar usuário. Tente novamente.'
+    
     return NextResponse.json(
-      { error: 'Erro ao criar usuário. Tente novamente.' },
+      { 
+        error: errorMessage,
+        ...(isDevelopment && { 
+          details: error.code ? `Código: ${error.code}` : undefined,
+          stack: error.stack 
+        })
+      },
       { status: 500 }
     )
   }
