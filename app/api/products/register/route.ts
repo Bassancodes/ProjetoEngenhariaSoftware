@@ -5,7 +5,7 @@ import { prisma } from '@/lib/prisma'
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { usuarioId, nome, preco, categoriaId, descricao } = body
+    const { usuarioId, nome, preco, categoriaId, descricao, imagens } = body
 
     // Validação dos campos obrigatórios
     if (!usuarioId) {
@@ -76,7 +76,43 @@ export async function POST(request: NextRequest) {
 
     const lojistaId = usuario.lojista.id
 
-    // Criar o produto usando os IDs diretamente
+    // Validar imagens se fornecidas
+    let imagensValidadas: Array<{ url: string; ordem: number }> = []
+    if (imagens && Array.isArray(imagens)) {
+      // Validar cada URL de imagem
+      for (let i = 0; i < imagens.length; i++) {
+        const url = imagens[i]
+        if (typeof url !== 'string' || !url.trim()) {
+          return NextResponse.json(
+            { error: `URL da imagem ${i + 1} é inválida` },
+            { status: 400 }
+          )
+        }
+
+        // Verificar se é uma URL pública válida (http ou https)
+        try {
+          const urlObj = new URL(url.trim())
+          if (!['http:', 'https:'].includes(urlObj.protocol)) {
+            return NextResponse.json(
+              { error: `URL da imagem ${i + 1} deve ser uma URL pública (http ou https)` },
+              { status: 400 }
+            )
+          }
+        } catch {
+          return NextResponse.json(
+            { error: `URL da imagem ${i + 1} não é uma URL válida` },
+            { status: 400 }
+          )
+        }
+
+        imagensValidadas.push({
+          url: url.trim(),
+          ordem: i,
+        })
+      }
+    }
+
+    // Criar o produto com as imagens
     const produto = await prisma.produto.create({
       data: {
         nome,
@@ -84,9 +120,17 @@ export async function POST(request: NextRequest) {
         categoriaId: categoriaIdNum,
         descricao: descricao || null,
         lojistaId: lojistaId,
+        imagens: {
+          create: imagensValidadas,
+        },
       },
       include: {
         categoria: true,
+        imagens: {
+          orderBy: {
+            ordem: 'asc',
+          },
+        },
         lojista: {
           include: {
             usuario: {

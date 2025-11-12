@@ -14,6 +14,11 @@ export async function GET(request: NextRequest) {
       const produtos = await prisma.produto.findMany({
         include: {
           categoria: true,
+          imagens: {
+            orderBy: {
+              ordem: 'asc',
+            },
+          },
           lojista: {
             include: {
               usuario: {
@@ -61,6 +66,11 @@ export async function GET(request: NextRequest) {
       const produtos = await prisma.produto.findMany({
         include: {
           categoria: true,
+          imagens: {
+            orderBy: {
+              ordem: 'asc',
+            },
+          },
           lojista: {
             include: {
               usuario: {
@@ -95,6 +105,11 @@ export async function GET(request: NextRequest) {
         },
         include: {
           categoria: true,
+          imagens: {
+            orderBy: {
+              ordem: 'asc',
+            },
+          },
           lojista: {
             include: {
               usuario: {
