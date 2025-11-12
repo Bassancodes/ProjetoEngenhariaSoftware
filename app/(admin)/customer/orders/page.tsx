@@ -101,10 +101,11 @@ export default function OrdersPage() {
 
         const fetchedOrders = (data?.orders ?? []) as Order[];
         setOrders(fetchedOrders);
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error("Erro ao buscar pedidos:", err);
         const message =
-          err?.response?.data?.error ?? "Erro ao buscar pedidos. Tente novamente.";
+          (err as { response?: { data?: { error?: string } } })?.response?.data?.error ??
+          "Erro ao buscar pedidos. Tente novamente.";
         setError(message);
       } finally {
         setLoading(false);

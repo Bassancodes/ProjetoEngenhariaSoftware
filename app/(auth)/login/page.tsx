@@ -98,9 +98,11 @@ export default function LoginPage() {
         // Fallback caso não tenha tipoPerfil
         router.push("/customer/catalog");
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       setErrors({
-        submit: error.message || "Erro ao fazer login. Tente novamente.",
+        submit:
+          (error as { message?: string })?.message ||
+          "Erro ao fazer login. Tente novamente.",
       });
     } finally {
       setIsLoading(false);

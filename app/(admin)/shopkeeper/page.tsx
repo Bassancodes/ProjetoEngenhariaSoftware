@@ -183,10 +183,12 @@ export default function ShopkeeperPage() {
       handleSelectCategoria(novaCategoria);
       setNovaCategoriaNome("");
       setIsCreatingCategoria(false);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Erro ao criar categoria:", error);
       setErrors({
-        categoriaId: error.message || "Erro ao criar categoria. Tente novamente.",
+        categoriaId:
+          (error as { message?: string })?.message ||
+          "Erro ao criar categoria. Tente novamente.",
       });
       setIsCreatingCategoria(false);
     }
@@ -273,9 +275,11 @@ export default function ShopkeeperPage() {
       if (produtosResponse.ok) {
         setProdutos(produtosData.produtos || []);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       setErrors({
-        submit: error.message || "Erro ao criar produto. Tente novamente.",
+        submit:
+          (error as { message?: string })?.message ||
+          "Erro ao criar produto. Tente novamente.",
       });
     } finally {
       setIsSubmitting(false);
@@ -515,7 +519,7 @@ export default function ShopkeeperPage() {
                         ) : (
                           <div className="p-4">
                             <div className="text-sm text-gray-900 mb-3">
-                              Nenhuma categoria encontrada com "{categoriaSearch}"
+                              Nenhuma categoria encontrada com &quot;{categoriaSearch}&quot;
                             </div>
                             <div className="space-y-2">
                               <input
@@ -558,7 +562,7 @@ export default function ShopkeeperPage() {
                                         d="M12 4v16m8-8H4"
                                       />
                                     </svg>
-                                    Criar "{novaCategoriaNome.trim() || categoriaSearch.trim()}"
+                                    Criar &quot;{novaCategoriaNome.trim() || categoriaSearch.trim()}&quot;
                                   </>
                                 )}
                               </button>
@@ -637,7 +641,7 @@ export default function ShopkeeperPage() {
                       </button>
                     </div>
                     <p className="text-xs text-gray-500">
-                      Adicione URLs públicas (http ou https) das imagens do produto. Uma por linha ou clique em "Adicionar" para cada URL.
+                      Adicione URLs públicas (http ou https) das imagens do produto. Uma por linha ou clique em &quot;Adicionar&quot; para cada URL.
                     </p>
                     {formData.imagens.length > 0 && (
                       <div className="mt-2 space-y-2">

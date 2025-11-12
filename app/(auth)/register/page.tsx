@@ -117,9 +117,11 @@ export default function RegisterPage() {
       setTimeout(() => {
         router.push("/login");
       }, 2000);
-    } catch (error: any) {
+    } catch (error: unknown) {
       setErrors({
-        submit: error.message || "Erro ao criar conta. Tente novamente.",
+        submit:
+          (error as { message?: string })?.message ||
+          "Erro ao criar conta. Tente novamente.",
       });
     } finally {
       setIsLoading(false);

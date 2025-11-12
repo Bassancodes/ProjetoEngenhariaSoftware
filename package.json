@@ -4,9 +4,10 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "npm run prisma:generate && next build",
     "start": "next start",
-    "lint": "eslint",
+    "lint": "eslint --fix",
+    "validate-types": "npx tsc --noEmit",
     "services:up": "docker compose -p baxeinwear -f infra/compose.yaml up -d",
     "services:stop": "docker compose -p baxeinwear -f infra/compose.yaml stop",
     "services:down": "docker compose -p baxeinwear -f infra/compose.yaml down",

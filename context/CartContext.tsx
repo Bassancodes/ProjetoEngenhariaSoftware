@@ -18,6 +18,15 @@ export interface CartItem extends Product {
   cartItemId: string; // ID único: productId-size-color
 }
 
+function isAbortError(error: unknown): boolean {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "name" in error &&
+    (error as { name?: unknown }).name === "AbortError"
+  );
+}
+
 interface CartContextType {
   items: CartItem[];
   addToCart: (product: Product, size: string, color: string) => void;
@@ -195,7 +204,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         }
         hasHydratedForUser.current = user.id;
       } catch (error) {
-        if ((error as any)?.name !== "AbortError") {
+        if (!isAbortError(error)) {
           console.error("Erro inesperado ao carregar carrinho:", error);
         }
       } finally {
@@ -255,7 +264,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
           console.error("Erro ao salvar carrinho no servidor:", await response.json());
         }
       } catch (error) {
-        if ((error as any)?.name !== "AbortError") {
+        if (!isAbortError(error)) {
           console.error("Erro inesperado ao salvar carrinho:", error);
         }
       } finally {
