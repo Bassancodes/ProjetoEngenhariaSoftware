@@ -1,133 +1,77 @@
 "use client";
 
 import Image from "next/image";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Filters from "../customer/catalog/Filters";
-import { Product, FilterState } from "../customer/catalog/types";
+import { Product, FilterState, ApiProduct } from "../customer/catalog/types";
 import { useCart } from "@/context/CartContext";
+import { useAuth } from "@/context/AuthContext";
 
 export default function CatalogPage() {
   const router = useRouter();
+  const { logout, user } = useAuth();
   const { addToCart, getItemCount } = useCart();
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [selectedSize, setSelectedSize] = useState<string>("");
   const [selectedColor, setSelectedColor] = useState<string>("");
   const [showModal, setShowModal] = useState(false);
+  const [allProducts, setAllProducts] = useState<Product[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Dados estáticos dos produtos (será substituído por API futuramente)
-  const allProducts: Product[] = [
-    {
-      id: 1,
-      name: "Calça Legging Feminina",
-      price: 189.99,
-      originalPrice: 229.99,
-      image: "/legging.png",
-      images: ["/legging.png", "/legging.png", "/legging.png"],
-      category: "Calças",
-      sizes: ["P", "M", "G", "GG"],
-      colors: ["Preto", "Cinza", "Branco"],
-      description: "Essencial em qualquer guarda-roupa, nossa calça jeans de lavagem escura é a peça-chave para compor looks que vão do casual ao sofisticado. Com um tom de azul profundo e design atemporal, ela oferece a combinação perfeita de conforto e estilo, adaptando-se a todas as ocasiões do seu dia, do trabalho ao happy hour.",
-      rating: {
-        stars: 5,
-        count: 238,
-      },
-      isBestSeller: true,
-      isOnSale: true,
-      features: ["Qualidade Premium", "Produção Sustentável", "Troca Fácil"],
-    },
-    {
-      id: 2,
-      name: "Camiseta Básica Branca Algodão",
-      price: 79.90,
-      image: "/white-shirt.png",
-      images: ["/white-shirt.png", "/white-shirt.png", "/white-shirt.png"],
-      category: "Camisetas",
-      sizes: ["P", "M", "G", "GG"],
-      colors: ["Branco", "Preto", "Cinza"],
-      description: "A camiseta básica perfeita para o seu guarda-roupa. Feita com 100% algodão de alta qualidade, oferece conforto e durabilidade. Ideal para usar sozinha ou como camada base, combina perfeitamente com qualquer look casual ou esportivo.",
-      rating: {
-        stars: 4,
-        count: 156,
-      },
-      isBestSeller: true,
-      isOnSale: false,
-      features: ["Qualidade Premium", "Produção Sustentável", "Troca Fácil"],
-    },
-    {
-      id: 3,
-      name: "Jaqueta de Couro Masculina Clássica",
-      price: 549.00,
-      originalPrice: 699.00,
-      image: "/leather-jacket.png",
-      images: ["/leather-jacket.png", "/leather-jacket.png", "/leather-jacket.png"],
-      category: "Jaquetas",
-      sizes: ["M", "G", "GG"],
-      colors: ["Preto", "Marrom"],
-      description: "Jaqueta de couro genuíno com design clássico e atemporal. Perfeita para adicionar um toque de estilo e elegância ao seu visual. Com forro interno confortável e acabamento impecável, esta jaqueta é um investimento para durar muitos anos.",
-      rating: {
-        stars: 5,
-        count: 89,
-      },
-      isBestSeller: false,
-      isOnSale: true,
-      features: ["Qualidade Premium", "Produção Sustentável", "Troca Fácil"],
-    },
-    {
-      id: 4,
-      name: "Moletom Canguru com Capuz Cinza",
-      price: 219.50,
-      image: "/grey-sweatshirt.png",
-      images: ["/grey-sweatshirt.png", "/grey-sweatshirt.png", "/grey-sweatshirt.png"],
-      category: "Moletons",
-      sizes: ["P", "M", "G", "GG"],
-      colors: ["Cinza", "Preto"],
-      description: "Moletom confortável e estiloso com capuz e bolso canguru. Perfeito para os dias mais frios ou para um look casual e descontraído. Feito com tecido macio e resistente, garantindo conforto e durabilidade.",
-      rating: {
-        stars: 4,
-        count: 201,
-      },
-      isBestSeller: true,
-      isOnSale: false,
-      features: ["Qualidade Premium", "Produção Sustentável", "Troca Fácil"],
-    },
-    {
-      id: 5,
-      name: "Camisa Polo Preta",
-      price: 129.90,
-      image: "/black-shirt.png",
-      images: ["/black-shirt.png", "/black-shirt.png", "/black-shirt.png"],
-      category: "Camisetas",
-      sizes: ["M", "G", "GG"],
-      colors: ["Preto", "Branco", "Azul"],
-      description: "Camisa polo clássica em tom escuro, perfeita para ocasiões casuais e semi-formais. Com tecido de alta qualidade e corte moderno, oferece conforto e estilo em qualquer situação.",
-      rating: {
-        stars: 4,
-        count: 124,
-      },
-      isBestSeller: false,
-      isOnSale: false,
-      features: ["Qualidade Premium", "Produção Sustentável", "Troca Fácil"],
-    },
-    {
-      id: 6,
-      name: "Bermuda Chino Amarela",
-      price: 159.99,
-      image: "/yellow-short.png",
-      images: ["/yellow-short.png", "/yellow-short.png", "/yellow-short.png"],
-      category: "Bermudas",
-      sizes: ["P", "M", "G"],
-      colors: ["Amarelo", "Bege"],
-      description: "Bermuda chino em cor vibrante, ideal para o verão. Com tecido leve e respirável, oferece conforto e estilo durante os dias mais quentes. Perfeita para praia, esportes ou um look casual moderno.",
-      rating: {
-        stars: 4,
-        count: 67,
-      },
-      isBestSeller: false,
-      isOnSale: false,
-      features: ["Qualidade Premium", "Produção Sustentável", "Troca Fácil"],
-    },
-  ];
+  // Função para converter produto da API para o formato do frontend
+  const convertApiProductToProduct = (apiProduct: ApiProduct): Product => {
+    const images = apiProduct.imagens && apiProduct.imagens.length > 0
+      ? apiProduct.imagens.map(img => img.url)
+      : ["/placeholder.png"]; // Imagem padrão se não houver imagens
+
+    const price = typeof apiProduct.preco === 'string'
+      ? parseFloat(apiProduct.preco)
+      : Number(apiProduct.preco);
+
+    return {
+      id: apiProduct.id,
+      name: apiProduct.nome,
+      price: price,
+      image: images[0] || "/placeholder.png",
+      images: images,
+      category: apiProduct.categoria.nome,
+      sizes: ["P", "M", "G", "GG"], // Valores padrão - pode ser expandido no futuro
+      colors: ["Preto", "Branco", "Cinza"], // Valores padrão - pode ser expandido no futuro
+      description: apiProduct.descricao || "",
+      isBestSeller: false, // Pode ser adicionado no futuro
+      isOnSale: false, // Pode ser adicionado no futuro
+      features: ["Qualidade Premium", "Produção Sustentável", "Troca Fácil"], // Valores padrão
+    };
+  };
+
+  // Buscar produtos da API
+  useEffect(() => {
+    const fetchProducts = async () => {
+      setIsLoading(true);
+      try {
+        const url = user?.id
+          ? `/api/products/list?usuarioId=${user.id}`
+          : `/api/products/list`;
+
+        const response = await fetch(url);
+        const data = await response.json();
+
+        if (response.ok && data.produtos) {
+          const convertedProducts = data.produtos.map(convertApiProductToProduct);
+          setAllProducts(convertedProducts);
+        } else {
+          console.error("Erro ao carregar produtos:", data.error);
+        }
+      } catch (error) {
+        console.error("Erro ao buscar produtos:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, [user?.id]);
 
   // Estado dos filtros
   const [filters, setFilters] = useState<FilterState>({
@@ -261,8 +205,11 @@ export default function CatalogPage() {
             {/* Lado Direito - Ações */}
             <div className="flex items-center gap-4">
               {/* Botão Sair */}
-              <button 
-                onClick={() => router.push("/login")}
+              <button
+                onClick={() => {
+                  logout();
+                  router.push("/login");
+                }}
                 className="bg-red-600 hover:bg-red-700 text-white font-medium px-4 py-2 rounded-md transition-colors duration-200"
               >
                 Sair
@@ -373,7 +320,12 @@ export default function CatalogPage() {
             </div>
 
             {/* Grid de Produtos */}
-            {filteredProducts.length > 0 ? (
+            {isLoading ? (
+              <div className="text-center py-16">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+                <p className="mt-4 text-gray-600">Carregando produtos...</p>
+              </div>
+            ) : filteredProducts.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {filteredProducts.map((product) => (
                   <div
@@ -381,17 +333,37 @@ export default function CatalogPage() {
                     className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-200 flex flex-col"
                   >
                     {/* Imagem do Produto - Clicável */}
-                    <div 
+                    <div
                       onClick={() => router.push(`/productDetails/${product.id}`)}
                       className="w-full h-64 bg-gray-100 relative overflow-hidden cursor-pointer"
                     >
-                      <Image
-                        src={product.image}
-                        alt={product.name}
-                        fill
-                        className="object-cover"
-                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                      />
+                      {product.image && product.image !== "/placeholder.png" ? (
+                        <img
+                          src={product.image}
+                          alt={product.name}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            // Fallback para placeholder se a imagem falhar ao carregar
+                            e.currentTarget.src = "/placeholder.png";
+                          }}
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-gray-200">
+                          <svg
+                            className="w-12 h-12 text-gray-400"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                            />
+                          </svg>
+                        </div>
+                      )}
                     </div>
 
                     {/* Informações do Produto */}

@@ -35,7 +35,9 @@ export default function ShopkeeperPage() {
     preco: "",
     categoriaId: "",
     descricao: "",
+    imagens: [] as string[],
   });
+  const [imagemUrl, setImagemUrl] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
@@ -242,6 +244,7 @@ export default function ShopkeeperPage() {
           preco: parseFloat(formData.preco),
           categoriaId: parseInt(formData.categoriaId),
           descricao: formData.descricao.trim() || null,
+          imagens: formData.imagens.length > 0 ? formData.imagens : undefined,
         }),
       });
 
@@ -257,9 +260,11 @@ export default function ShopkeeperPage() {
         preco: "",
         categoriaId: "",
         descricao: "",
+        imagens: [],
       });
       setCategoriaSearch("");
       setNovaCategoriaNome("");
+      setImagemUrl("");
       setShowForm(false);
 
       // Recarregar produtos
@@ -587,6 +592,86 @@ export default function ShopkeeperPage() {
                     placeholder="Descreva o produto..."
                   />
                 </div>
+
+                {/* Imagens */}
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    URLs das Imagens (opcional)
+                  </label>
+                  <div className="space-y-2">
+                    <div className="flex gap-2">
+                      <input
+                        type="url"
+                        value={imagemUrl}
+                        onChange={(e) => setImagemUrl(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            if (imagemUrl.trim() && imagemUrl.startsWith("http")) {
+                              setFormData((prev) => ({
+                                ...prev,
+                                imagens: [...prev.imagens, imagemUrl.trim()],
+                              }));
+                              setImagemUrl("");
+                            }
+                          }
+                        }}
+                        placeholder="https://exemplo.com/imagem.jpg"
+                        className="flex-1 px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (imagemUrl.trim() && imagemUrl.startsWith("http")) {
+                            setFormData((prev) => ({
+                              ...prev,
+                              imagens: [...prev.imagens, imagemUrl.trim()],
+                            }));
+                            setImagemUrl("");
+                          }
+                        }}
+                        disabled={!imagemUrl.trim() || !imagemUrl.startsWith("http")}
+                        className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+                      >
+                        Adicionar
+                      </button>
+                    </div>
+                    <p className="text-xs text-gray-500">
+                      Adicione URLs públicas (http ou https) das imagens do produto. Uma por linha ou clique em "Adicionar" para cada URL.
+                    </p>
+                    {formData.imagens.length > 0 && (
+                      <div className="mt-2 space-y-2">
+                        <p className="text-sm font-medium text-gray-700">
+                          Imagens adicionadas ({formData.imagens.length}):
+                        </p>
+                        <div className="space-y-1">
+                          {formData.imagens.map((url, index) => (
+                            <div
+                              key={index}
+                              className="flex items-center justify-between bg-gray-50 p-2 rounded-md"
+                            >
+                              <span className="text-sm text-gray-700 truncate flex-1 mr-2">
+                                {url}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setFormData((prev) => ({
+                                    ...prev,
+                                    imagens: prev.imagens.filter((_, i) => i !== index),
+                                  }));
+                                }}
+                                className="text-red-600 hover:text-red-700 text-sm font-medium"
+                              >
+                                Remover
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
 
               {/* Erro de submissão */}
@@ -607,9 +692,11 @@ export default function ShopkeeperPage() {
                       preco: "",
                       categoriaId: "",
                       descricao: "",
+                      imagens: [],
                     });
                     setCategoriaSearch("");
                     setNovaCategoriaNome("");
+                    setImagemUrl("");
                     setErrors({});
                   }}
                   className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors"

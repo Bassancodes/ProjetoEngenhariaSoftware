@@ -1,16 +1,25 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
 import Link from "next/link";
+import { CustomerHeader } from "@/components/CustomerHeader";
+
+const DEFAULT_SIZES = ["P", "M", "G", "GG"];
+const DEFAULT_COLORS = ["Preto", "Branco", "Cinza"];
+const FALLBACK_IMAGE = "/placeholder.png";
 
 export default function CartPage() {
   const router = useRouter();
-  const { isAuthenticated, isLoading, logout } = useAuth();
-  const { items, removeFromCart, updateQuantity, getTotalPrice } = useCart();
+  const { isAuthenticated, isLoading, user } = useAuth();
+  const {
+    items,
+    removeFromCart,
+    updateQuantity,
+    getTotalPrice,
+  } = useCart();
 
   // Função para lidar com o clique no botão "Ir para Fazer Pedido"
   const handleCheckoutClick = () => {
@@ -34,56 +43,14 @@ export default function CartPage() {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Header Fixo */}
-      <header className="sticky top-0 bg-white border-b border-gray-200 z-50 shadow-sm">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            {/* Lado Esquerdo - Logo */}
-            <div className="flex items-center gap-8">
-              <div>
-                <div className="text-xs text-gray-900 mb-1">
-                  BAXEIN WEAR - Carrinho
-                </div>
-                <div className="text-2xl font-bold text-gray-800">
-                  BAXEINWEAR
-                </div>
-              </div>
-            </div>
-
-            {/* Lado Direito - Ações */}
-            <div className="flex items-center gap-4">
-              {/* Botão Sair */}
-              <button 
-                onClick={() => {
-                  logout();
-                  router.push("/login");
-                }}
-                className="bg-red-600 hover:bg-red-700 text-white font-medium px-4 py-2 rounded-md transition-colors duration-200"
-              >
-                Sair
-              </button>
-
-              {/* Usuário */}
-              <div className="flex items-center gap-2 text-gray-900">
-                <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center">
-                  <svg
-                    className="w-5 h-5 text-gray-600"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                </div>
-                <span className="font-medium">CLIENTE</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </header>
+      <CustomerHeader
+        subtitle="BAXEIN WEAR - Carrinho"
+        profileMenuItems={[
+          { label: "Meu Carrinho", href: "/customer/cart", disabled: true },
+          { label: "Meus Pedidos", href: "/customer/orders" },
+          { label: "Catálogo", href: "/customer/catalog" },
+        ]}
+      />
 
       {/* Conteúdo Principal */}
       <main className="max-w-7xl mx-auto px-6 py-12">
@@ -104,7 +71,7 @@ export default function CartPage() {
                     {/* Imagem do Produto */}
                     <div className="w-24 h-24 bg-gray-100 rounded-md relative overflow-hidden flex-shrink-0">
                       <Image
-                        src={item.image}
+                        src={item.image || FALLBACK_IMAGE}
                         alt={item.name}
                         fill
                         className="object-cover"
@@ -118,7 +85,8 @@ export default function CartPage() {
                         {item.name}
                       </h3>
                       <p className="text-sm text-gray-900 mb-2">
-                        Tamanho: {item.selectedSize}, Cor: {item.selectedColor}
+                        Tamanho: {item.selectedSize ?? DEFAULT_SIZES[0]}, Cor:{" "}
+                        {item.selectedColor ?? DEFAULT_COLORS[0]}
                       </p>
                       <p className="text-lg font-semibold text-gray-900 mb-4">
                         {formatPrice(item.price)}

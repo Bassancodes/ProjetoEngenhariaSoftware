@@ -23,7 +23,7 @@ interface CheckoutFormData {
 
 export default function CheckoutPage() {
   const router = useRouter();
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, user } = useAuth();
   const { items, getTotalPrice } = useCart();
   const [formData, setFormData] = useState<CheckoutFormData>({
     cep: "",
@@ -112,6 +112,7 @@ export default function CheckoutPage() {
     }
   };
 
+  const [isCreatingOrder, setIsCreatingOrder] = useState(false);
   const subtotal = getTotalPrice();
   const shipping = formData.shippingOption === "pac" ? 15.0 : 25.0;
   const total = subtotal + shipping;
@@ -134,6 +135,41 @@ export default function CheckoutPage() {
   if (isLoading || !isAuthenticated || items.length === 0) {
     return null;
   }
+
+  const handleGoToPayment = async () => {
+    if (!user?.id || isCreatingOrder) {
+      return;
+    }
+
+    setIsCreatingOrder(true);
+
+    try {
+      const response = await fetch("/api/orders/create", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ usuarioId: user.id }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        const message =
+          typeof data.error === "string"
+            ? data.error
+            : "Não foi possível criar o pedido. Tente novamente.";
+        alert(message);
+        return;
+      }
+
+      router.push("/customer/payment");
+    } catch (error) {
+      console.error("Erro ao criar pedido:", error);
+      alert("Erro ao criar pedido. Verifique sua conexão e tente novamente.");
+    } finally {
+      setIsCreatingOrder(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-white">
@@ -497,12 +533,14 @@ export default function CheckoutPage() {
                 >
                   Voltar ao Carrinho
                 </Link>
-                <Link
-                  href="/customer/payment"
-                  className="block w-full text-center bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-md transition-colors duration-200"
+                <button
+                  type="button"
+                  onClick={handleGoToPayment}
+                  disabled={isCreatingOrder}
+                  className="w-full text-center bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed text-white font-medium py-3 px-4 rounded-md transition-colors duration-200"
                 >
-                  Ir para Pagamento
-                </Link>
+                  {isCreatingOrder ? "Criando pedido..." : "Ir para Pagamento"}
+                </button>
               </div>
             </div>
           </div>
