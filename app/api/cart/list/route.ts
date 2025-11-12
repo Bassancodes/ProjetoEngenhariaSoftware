@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import type { Prisma } from '@prisma/client'
 
 const DEFAULT_SIZE = 'Único'
 const DEFAULT_COLOR = 'Padrão'
@@ -13,6 +14,18 @@ const formatProductPrice = (preco: unknown) => {
   }
   if (preco == null) return 0
   if (typeof preco === 'bigint') return Number(preco)
+  // Prisma Decimal or similar objects exposing toNumber/toString
+  if (typeof preco === 'object') {
+    const maybeDecimal = preco as { toNumber?: () => number; toString?: () => string }
+    if (typeof maybeDecimal.toNumber === 'function') {
+      const value = maybeDecimal.toNumber()
+      return Number.isNaN(value) ? 0 : value
+    }
+    if (typeof maybeDecimal.toString === 'function') {
+      const parsed = Number.parseFloat(maybeDecimal.toString())
+      return Number.isNaN(parsed) ? 0 : parsed
+    }
+  }
   return 0
 }
 
@@ -23,7 +36,7 @@ function formatCartItem(
     produto: {
       id: number
       nome: string
-      preco: number | string | null
+      preco: number | string | Prisma.Decimal | null
       categoria: { nome: string }
       imagens: Array<{ url: string }>
     }
