@@ -104,10 +104,16 @@ export async function POST(request: NextRequest) {
 
     const lojistaId = carrinho.itensCarrinho[0].produto.lojistaId
 
-    const totalAmount = carrinho.itensCarrinho.reduce((total, item) => {
-      const unitPrice = Number(item.produto.preco)
-      return total + unitPrice * item.quantidade
-    }, 0 as number)
+    const totalAmount = carrinho.itensCarrinho.reduce(
+      (
+        total: number,
+        item: { produto: { preco: unknown }; quantidade: number }
+      ) => {
+        const unitPrice = Number(item.produto.preco)
+        return total + unitPrice * item.quantidade
+      },
+      0
+    )
 
     const pedido = await prisma.$transaction(async (tx) => {
       const createdOrder = await tx.pedido.create({
