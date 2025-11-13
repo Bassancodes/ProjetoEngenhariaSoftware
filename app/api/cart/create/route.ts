@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { Prisma } from '@prisma/client'
 
 type CartItemPayload = {
   id?: number | string
@@ -282,7 +283,7 @@ export async function POST(request: NextRequest) {
         return acc
       }, new Map())
   
-      await prisma.$transaction(async (tx) => {
+      await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
         await tx.itemCarrinho.deleteMany({
           where: { carrinhoId: carrinho.id },
         })
