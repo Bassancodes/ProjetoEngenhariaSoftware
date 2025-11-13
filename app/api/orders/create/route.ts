@@ -1,26 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import type { Prisma } from '@prisma/client'
 
 type CreateOrderRequest = {
   usuarioId?: string
 }
 
-type PedidoComItens = Prisma.PedidoGetPayload<{
-  include: {
-    itensPedido: {
-      include: {
-        produto: {
-          select: {
-            id: true
-            nome: true
-            preco: true
-          }
-        }
-      }
-    }
-  }
-}>
 async function ensureCliente(usuarioId: string) {
   const usuario = await prisma.usuario.findUnique({
     where: { id: usuarioId },
@@ -125,7 +109,7 @@ export async function POST(request: NextRequest) {
       return total + unitPrice * item.quantidade
     }, 0)
 
-    const pedido: PedidoComItens = await prisma.$transaction(async (tx) => {
+    const pedido = await prisma.$transaction(async (tx) => {
       const createdOrder = await tx.pedido.create({
         data: {
           clienteId,
