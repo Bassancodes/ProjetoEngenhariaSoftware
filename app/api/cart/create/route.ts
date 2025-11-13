@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import type { Prisma } from '@prisma/client'
+import type {} from '@prisma/client'
 
 type CartItemPayload = {
   id?: number | string
@@ -89,7 +89,7 @@ function formatCartItem(
     produto: {
       id: number
       nome: string
-      preco: number | string | Prisma.Decimal | null
+      preco: unknown | null
       categoria: { nome: string }
       imagens: Array<{ url: string }>
     }
