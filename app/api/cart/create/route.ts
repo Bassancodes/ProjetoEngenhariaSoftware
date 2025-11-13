@@ -316,7 +316,17 @@ export async function POST(request: NextRequest) {
       })
   
       const itensFormatados =
-        carrinhoAtualizado?.itensCarrinho.map((item) =>
+        carrinhoAtualizado?.itensCarrinho.map((item: {
+          id: number
+          quantidade: number
+          produto: {
+            id: number
+            nome: string
+            preco: unknown | null
+            categoria: { nome: string }
+            imagens: Array<{ url: string }>
+          }
+        }) =>
           formatCartItem(item, metadataByProduct.get(item.produto.id) ?? undefined)
         ) ?? []
   
