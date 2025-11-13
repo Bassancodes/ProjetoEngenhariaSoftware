@@ -144,7 +144,9 @@ export async function GET(request: NextRequest) {
     }
 
     // Transformar os itens para o formato esperado pelo frontend
-    const items = carrinho.itensCarrinho.map((item) => formatCartItem(item))
+    const items = carrinho.itensCarrinho.map(
+      (item: Parameters<typeof formatCartItem>[0]) => formatCartItem(item)
+    )
 
     return NextResponse.json(
       {
