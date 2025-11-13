@@ -117,8 +117,37 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    const orders = pedidos.map((pedido) => {
-      const total = pedido.itensPedido.reduce((acc, item) => {
+    const orders = pedidos.map(
+      (
+        pedido: {
+          id: number
+          status: string
+          createdAt: Date
+          lojista?: { empresa: string } | null
+          itensPedido: Array<{
+            id: number
+            produtoId: number
+            quantidade: number
+            precoUnitario: unknown
+            produto: { nome: string; imagens: Array<{ url: string }> }
+          }>
+          pagamentos: Array<{
+            id: number
+            valor: unknown
+            status: string
+            tipoPagamento: string
+            createdAt: Date
+          }>
+        }
+      ) => {
+      const total = pedido.itensPedido.reduce(
+        (
+          acc: number,
+          item: {
+            quantidade: number
+            precoUnitario: unknown
+          }
+        ) => {
         const unit = formatDecimal(item.precoUnitario)
         return acc + unit * item.quantidade
       }, 0)
@@ -130,24 +159,45 @@ export async function GET(request: NextRequest) {
         createdAt: pedido.createdAt,
         lojista: pedido.lojista?.empresa ?? null,
         total,
-        itens: pedido.itensPedido.map((item) => ({
-          id: item.id,
-          produtoId: item.produtoId,
-          nomeProduto: item.produto.nome,
-          quantidade: item.quantidade,
-          precoUnitario: formatDecimal(item.precoUnitario),
-          subtotal: formatDecimal(item.precoUnitario) * item.quantidade,
-          imagem: item.produto.imagens[0]?.url ?? null,
-        })),
-        pagamentos: pedido.pagamentos.map((pagamento) => ({
-          id: pagamento.id,
-          valor: formatDecimal(pagamento.valor),
-          status: pagamento.status,
-          tipoPagamento: pagamento.tipoPagamento,
-          createdAt: pagamento.createdAt,
-        })),
+        itens: pedido.itensPedido.map(
+          (
+            item: {
+              id: number
+              produtoId: number
+              quantidade: number
+              precoUnitario: unknown
+              produto: { nome: string; imagens: Array<{ url: string }> }
+            }
+          ) => ({
+            id: item.id,
+            produtoId: item.produtoId,
+            nomeProduto: item.produto.nome,
+            quantidade: item.quantidade,
+            precoUnitario: formatDecimal(item.precoUnitario),
+            subtotal: formatDecimal(item.precoUnitario) * item.quantidade,
+            imagem: item.produto.imagens[0]?.url ?? null,
+          })
+        ),
+        pagamentos: pedido.pagamentos.map(
+          (
+            pagamento: {
+              id: number
+              valor: unknown
+              status: string
+              tipoPagamento: string
+              createdAt: Date
+            }
+          ) => ({
+            id: pagamento.id,
+            valor: formatDecimal(pagamento.valor),
+            status: pagamento.status,
+            tipoPagamento: pagamento.tipoPagamento,
+            createdAt: pagamento.createdAt,
+          })
+        ),
       }
-    })
+    }
+    )
 
     return NextResponse.json(
       {
