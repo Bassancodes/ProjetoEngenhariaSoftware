@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
     const tipoUsuario = accountType === 'cliente' ? 'CLIENTE' : 'LOJISTA'
 
     // Criar usuário e perfil em uma transação
-    const resultado = await prisma.$transaction(async (tx) => {
+    const resultado = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       // Criar o usuário
       const usuario = await tx.usuario.create({
         data: {
