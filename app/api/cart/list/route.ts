@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import type {} from '@prisma/client'
 
 const DEFAULT_SIZE = 'Único'
 const DEFAULT_COLOR = 'Padrão'
