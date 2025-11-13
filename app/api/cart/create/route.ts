@@ -230,7 +230,7 @@ export async function POST(request: NextRequest) {
       })
   
       if (produtos.length !== produtoIds.length) {
-        const encontrados = new Set(produtos.map((produto) => produto.id))
+        const encontrados = new Set(produtos.map((produto: { id: number }) => produto.id))
         const faltantes = produtoIds.filter((id) => !encontrados.has(id))
   
         return NextResponse.json(
