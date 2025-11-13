@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { Prisma } from '@prisma/client'
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library'
 
 // POST /api/cadastro - Criar novo usuário com perfil (Cliente ou Lojista)
 export async function POST(request: NextRequest) {
@@ -136,7 +137,7 @@ export async function POST(request: NextRequest) {
   } catch (error: unknown) {
     console.error('Erro ao criar usuário:', error)
     // Erros conhecidos do Prisma (constraints, validação, etc.)
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+    if (error instanceof PrismaClientKnownRequestError) {
       if (error.code === 'P2002') {
         const meta = error.meta as { target?: string[] } | undefined
         const campo = meta?.target?.[0] || 'campo'

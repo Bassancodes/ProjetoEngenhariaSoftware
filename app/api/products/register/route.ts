@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { Prisma } from '@prisma/client'
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library'
 
 // POST /api/products/register - Criar produto (apenas lojistas)
 export async function POST(request: NextRequest) {
@@ -157,14 +158,14 @@ export async function POST(request: NextRequest) {
     console.error('Erro ao criar produto:', error)
     
     // Retornar mensagem de erro mais específica
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+    if (error instanceof PrismaClientKnownRequestError && error.code === 'P2002') {
       return NextResponse.json(
         { error: 'Já existe um produto com este nome' },
         { status: 409 }
       )
     }
     
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2003') {
+    if (error instanceof PrismaClientKnownRequestError && error.code === 'P2003') {
       return NextResponse.json(
         { error: 'Categoria ou lojista não encontrado' },
         { status: 404 }
