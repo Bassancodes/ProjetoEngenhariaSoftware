@@ -1,10 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import type { Prisma } from '@prisma/client'
 
 type CreateOrderRequest = {
   usuarioId?: string
 }
 
+type PedidoComItens = Prisma.PedidoGetPayload<{
+  include: {
+    itensPedido: {
+      include: {
+        produto: {
+          select: {
+            id: true
+            nome: true
+            preco: true
+          }
+        }
+      }
+    }
+  }
+}>
 async function ensureCliente(usuarioId: string) {
   const usuario = await prisma.usuario.findUnique({
     where: { id: usuarioId },
@@ -80,7 +96,9 @@ export async function POST(request: NextRequest) {
     }
 
     const lojistaIds = new Set(
-      carrinho.itensCarrinho.map((item) => item.produto.lojistaId)
+      carrinho.itensCarrinho.map(
+        (item: { produto: { lojistaId: number } }) => item.produto.lojistaId
+      )
     )
 
     if (lojistaIds.size === 0) {
@@ -107,18 +125,26 @@ export async function POST(request: NextRequest) {
       return total + unitPrice * item.quantidade
     }, 0)
 
-    const pedido = await prisma.$transaction(async (tx) => {
+    const pedido: PedidoComItens = await prisma.$transaction(async (tx) => {
       const createdOrder = await tx.pedido.create({
         data: {
           clienteId,
           lojistaId,
           status: 'PENDENTE_PAGAMENTO',
           itensPedido: {
-            create: carrinho.itensCarrinho.map((item) => ({
-              produtoId: item.produtoId,
-              quantidade: item.quantidade,
-              precoUnitario: item.produto.preco,
-            })),
+            create: carrinho.itensCarrinho.map(
+              (
+                item: {
+                  produtoId: number
+                  quantidade: number
+                  produto: { preco: any }
+                }
+              ) => ({
+                produto: { connect: { id: item.produtoId } },
+                quantidade: item.quantidade,
+                precoUnitario: item.produto.preco,
+              })
+            ),
           },
         },
         include: {
@@ -151,14 +177,24 @@ export async function POST(request: NextRequest) {
           status: pedido.status,
           createdAt: pedido.createdAt,
           totalAmount,
-          itens: pedido.itensPedido.map((item) => ({
-            id: item.id,
-            produtoId: item.produtoId,
-            nomeProduto: item.produto.nome,
-            quantidade: item.quantidade,
-            precoUnitario: Number(item.precoUnitario),
-            subtotal: Number(item.precoUnitario) * item.quantidade,
-          })),
+          itens: pedido.itensPedido.map(
+            (
+              item: {
+                id: number
+                produtoId: number
+                quantidade: number
+                precoUnitario: unknown
+                produto: { nome: string }
+              }
+            ) => ({
+              id: item.id,
+              produtoId: item.produtoId,
+              nomeProduto: item.produto.nome,
+              quantidade: item.quantidade,
+              precoUnitario: Number(item.precoUnitario),
+              subtotal: Number(item.precoUnitario) * item.quantidade,
+            })
+          ),
         },
       },
       { status: 201 }
