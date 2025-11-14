@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
@@ -10,9 +10,13 @@ import { CustomerHeader } from "@/components/CustomerHeader";
 
 export default function PaymentPage() {
   const router = useRouter();
-  const { isAuthenticated, isLoading } = useAuth();
+  const searchParams = useSearchParams();
+  const { isAuthenticated, isLoading, user } = useAuth();
   const { items, getTotalPrice, clearCart } = useCart();
   const [paymentConfirmed, setPaymentConfirmed] = useState(false);
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const [orderId, setOrderId] = useState<number | null>(null);
+  const [shipping, setShipping] = useState(15.0);
   const [orderNumber] = useState(() => `PED-${Date.now()}`);
 
   const formatPrice = (price: number) => {
@@ -23,8 +27,21 @@ export default function PaymentPage() {
   };
 
   const subtotal = getTotalPrice();
-  const shipping = 15.0; // Valor padrão, pode ser ajustado
   const total = subtotal + shipping;
+
+  // Recuperar orderId e shipping da URL
+  useEffect(() => {
+    const orderIdParam = searchParams.get("orderId");
+    const shippingParam = searchParams.get("shipping");
+    
+    if (orderIdParam) {
+      setOrderId(Number(orderIdParam));
+    }
+    
+    if (shippingParam) {
+      setShipping(Number(shippingParam));
+    }
+  }, [searchParams]);
 
   // Redirecionar para login se não estiver autenticado
   useEffect(() => {
@@ -40,13 +57,53 @@ export default function PaymentPage() {
     }
   }, [items, router, paymentConfirmed, isAuthenticated]);
 
-  const handleSimulatePayment = () => {
-    setPaymentConfirmed(true);
-    // Limpar carrinho após 3 segundos e redirecionar
-    setTimeout(() => {
-      clearCart();
-      router.push("/customer/catalog");
-    }, 3000);
+  const handleSimulatePayment = async () => {
+    if (!orderId || !user?.id || isProcessingPayment) {
+      alert("Erro: Informações do pedido não encontradas.");
+      return;
+    }
+
+    setIsProcessingPayment(true);
+
+    try {
+      const response = await fetch(`/api/orders/${orderId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          usuarioId: user.id,
+          action: "confirm_payment",
+          payment: {
+            valor: total,
+            frete: shipping,
+            tipoPagamento: "PIX",
+          },
+        }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        const message =
+          typeof data.error === "string"
+            ? data.error
+            : "Não foi possível confirmar o pagamento. Tente novamente.";
+        alert(message);
+        return;
+      }
+
+      setPaymentConfirmed(true);
+      // Limpar carrinho após 3 segundos e redirecionar
+      setTimeout(() => {
+        clearCart();
+        router.push("/customer/catalog");
+      }, 3000);
+    } catch (error) {
+      console.error("Erro ao confirmar pagamento:", error);
+      alert("Erro ao confirmar pagamento. Verifique sua conexão e tente novamente.");
+    } finally {
+      setIsProcessingPayment(false);
+    }
   };
 
   // Não renderizar nada enquanto verifica autenticação ou redireciona
@@ -234,9 +291,10 @@ export default function PaymentPage() {
               </Link>
               <button
                 onClick={handleSimulatePayment}
-                className="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-4 rounded-md transition-colors duration-200"
+                disabled={isProcessingPayment}
+                className="w-full bg-green-600 hover:bg-green-700 disabled:bg-green-400 disabled:cursor-not-allowed text-white font-medium py-3 px-4 rounded-md transition-colors duration-200"
               >
-               Confirmar Pagamento
+                {isProcessingPayment ? "Processando..." : "Confirmar Pagamento"}
               </button>
             </div>
           </div>

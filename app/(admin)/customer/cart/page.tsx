@@ -70,12 +70,10 @@ export default function CartPage() {
                   >
                     {/* Imagem do Produto */}
                     <div className="w-24 h-24 bg-gray-100 rounded-md relative overflow-hidden flex-shrink-0">
-                      <Image
+                      <img
                         src={item.image || FALLBACK_IMAGE}
                         alt={item.name}
-                        fill
-                        className="object-cover"
-                        sizes="96px"
+                        className="absolute inset-0 w-full h-full object-cover"
                       />
                     </div>
 

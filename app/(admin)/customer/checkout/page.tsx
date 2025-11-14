@@ -208,7 +208,15 @@ export default function CheckoutPage() {
         return;
       }
 
-      router.push("/customer/payment");
+      const data = await response.json();
+      const orderId = data.order?.id;
+
+      if (!orderId) {
+        alert("Erro ao obter ID do pedido. Tente novamente.");
+        return;
+      }
+
+      router.push(`/customer/payment?orderId=${orderId}&shipping=${shipping}`);
     } catch (error) {
       console.error("Erro ao criar pedido:", error);
       alert("Erro ao criar pedido. Verifique sua conexão e tente novamente.");
@@ -494,12 +502,10 @@ export default function CheckoutPage() {
                     className="flex items-start gap-3 pb-4 border-b border-gray-200 last:border-b-0"
                   >
                     <div className="w-16 h-16 bg-gray-100 rounded-md relative overflow-hidden flex-shrink-0">
-                      <Image
+                      <img
                         src={item.image}
                         alt={item.name}
-                        fill
-                        className="object-cover"
-                        sizes="64px"
+                        className="absolute inset-0 w-full h-full object-cover"
                       />
                     </div>
                     <div className="flex-1 min-w-0">

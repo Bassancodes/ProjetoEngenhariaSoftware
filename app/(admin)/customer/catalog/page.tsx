@@ -212,10 +212,13 @@ export default function CatalogPage() {
 
       // Filtro de preço
       if (filters.priceRange) {
-        const [min, max] = filters.priceRange.split("-");
-        if (max === "+") {
-          if (product.price < Number(min)) return false;
+        if (filters.priceRange.includes("+")) {
+          // Para ranges do tipo "500+"
+          const min = Number(filters.priceRange.replace("+", ""));
+          if (product.price <= min) return false;
         } else {
+          // Para ranges normais "100-200"
+          const [min, max] = filters.priceRange.split("-");
           const minPrice = Number(min);
           const maxPrice = Number(max);
           if (product.price < minPrice || product.price > maxPrice) return false;

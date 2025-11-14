@@ -310,11 +310,10 @@ export default function OrderDetailsPage() {
                     {/* Imagem do Produto */}
                     <div className="flex-shrink-0 w-24 h-24 bg-gray-100 rounded-md overflow-hidden relative">
                       {item.imagemPrincipal ? (
-                        <Image
+                        <img
                           src={item.imagemPrincipal}
                           alt={item.nomeProduto}
-                          fill
-                          className="object-cover"
+                          className="absolute inset-0 w-full h-full object-cover"
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-gray-400">

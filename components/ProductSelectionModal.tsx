@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { useMemo } from "react";
 
 interface Product {
@@ -226,13 +225,10 @@ export function ProductSelectionModal({
           <div className="flex-1 overflow-y-auto">
             {/* Imagem do Produto */}
             <div className="relative w-full h-64 bg-gradient-to-br from-gray-100 to-gray-200 overflow-hidden">
-              <Image
+              <img
                 src={selectedProduct.image || "/placeholder.png"}
                 alt={selectedProduct.name}
-                fill
-                className="object-cover"
-                sizes="500px"
-                priority
+                className="absolute inset-0 w-full h-full object-cover"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
             </div>

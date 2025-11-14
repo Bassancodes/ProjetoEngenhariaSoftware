@@ -11,6 +11,14 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "media.istockphoto.com",
       },
+      {
+        protocol: "https",
+        hostname: "consuladodorock.com.br",
+      },
+      {
+        protocol: "https",
+        hostname: "www.hangar33.com.br",
+      },
     ],
   },
 };
