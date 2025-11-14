@@ -9,6 +9,16 @@ function formatDecimal(value: unknown) {
   }
   if (value == null) return 0
   if (typeof value === 'bigint') return Number(value)
+  // Handle Prisma Decimal type
+  if (typeof value === 'object' && value !== null && 'toNumber' in value) {
+    return (value as { toNumber: () => number }).toNumber()
+  }
+  // Handle Prisma Decimal toString
+  if (typeof value === 'object' && value !== null) {
+    const str = value.toString()
+    const parsed = Number.parseFloat(str)
+    return Number.isNaN(parsed) ? 0 : parsed
+  }
   return 0
 }
 
@@ -83,11 +93,16 @@ export async function GET(request: NextRequest) {
           },
         },
         itensPedido: {
-          include: {
+          select: {
+            id: true,
+            produtoId: true,
+            quantidade: true,
+            precoUnitario: true,
             produto: {
               select: {
                 id: true,
                 nome: true,
+                preco: true,
                 imagens: {
                   select: { url: true },
                 },

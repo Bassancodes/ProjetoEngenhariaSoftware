@@ -230,12 +230,12 @@ export default function OrdersPage() {
                       {statusInfo.label}
                     </div>
 
-                    <button
-                      type="button"
+                    <Link
+                      href={`/customer/orders/${order.id}`}
                       className="inline-flex items-center justify-center px-5 py-2 rounded-md bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-colors duration-200"
                     >
                       Ver Detalhes
-                    </button>
+                    </Link>
                   </div>
                 </div>
               );
