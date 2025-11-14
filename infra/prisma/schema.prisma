@@ -51,6 +51,8 @@ model Produto {
   categoria Categoria @relation(fields: [categoriaId], references: [id])
   categoriaId Int
   descricao String?
+  estoque Int @default(0)
+  ativo Boolean @default(true)
   itensPedido ItemPedido[]
   itensCarrinho ItemCarrinho[]
   lojista Lojista @relation(fields: [lojistaId], references: [id])

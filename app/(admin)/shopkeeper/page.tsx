@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { CustomerHeader } from "@/components/CustomerHeader";
@@ -21,6 +21,13 @@ interface Produto {
   };
   descricao?: string;
   createdAt: string;
+  imagens?: Array<{
+    id: number;
+    url: string;
+    ordem: number;
+  }>;
+  estoque?: number;
+  ativo?: boolean;
 }
 
 export default function ShopkeeperPage() {
@@ -31,17 +38,21 @@ export default function ShopkeeperPage() {
   const [isLoadingProdutos, setIsLoadingProdutos] = useState(false);
   const [isLoadingCategorias, setIsLoadingCategorias] = useState(false);
   const [showForm, setShowForm] = useState(false);
+  const [editingProdutoId, setEditingProdutoId] = useState<number | null>(null);
   const [formData, setFormData] = useState({
     nome: "",
     preco: "",
     categoriaId: "",
     descricao: "",
+    estoque: "",
     imagens: [] as string[],
   });
   const [imagemUrl, setImagemUrl] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
+  const [toast, setToast] = useState<{ type: "success" | "error"; message: string } | null>(null);
+  const toastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   
   // Estados para o selector de categoria
   const [categoriaSearch, setCategoriaSearch] = useState("");
@@ -49,12 +60,37 @@ export default function ShopkeeperPage() {
   const [isCreatingCategoria, setIsCreatingCategoria] = useState(false);
   const [novaCategoriaNome, setNovaCategoriaNome] = useState("");
 
+  // Filtros (busca, categoria, status)
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedCategoriaId, setSelectedCategoriaId] = useState<number | "all">("all");
+  const [selectedStatus, setSelectedStatus] = useState<"all" | "ativo" | "inativo">("ativo");
+  const [reloadFlag, setReloadFlag] = useState(0);
+
   // Verificar autenticação e tipo de usuário
   useEffect(() => {
     if (!isLoading && (!isAuthenticated || user?.tipoPerfil !== "lojista")) {
       router.push("/login");
     }
   }, [isAuthenticated, isLoading, user, router]);
+
+  useEffect(() => {
+    return () => {
+      if (toastTimeoutRef.current) {
+        clearTimeout(toastTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  const showToast = (message: string, type: "success" | "error" = "success") => {
+    setToast({ message, type });
+    if (toastTimeoutRef.current) {
+      clearTimeout(toastTimeoutRef.current);
+    }
+    toastTimeoutRef.current = setTimeout(() => {
+      setToast(null);
+      toastTimeoutRef.current = null;
+    }, 4000);
+  };
 
   // Carregar categorias
   useEffect(() => {
@@ -104,7 +140,7 @@ export default function ShopkeeperPage() {
     if (isAuthenticated && user?.tipoPerfil === "lojista") {
       fetchProdutos();
     }
-  }, [isAuthenticated, user, showForm]);
+  }, [isAuthenticated, user, showForm, reloadFlag]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
@@ -215,6 +251,13 @@ export default function ShopkeeperPage() {
       newErrors.categoriaId = "Categoria é obrigatória";
     }
 
+    if (formData.estoque.trim()) {
+      const estoqueNumero = parseInt(formData.estoque, 10);
+      if (isNaN(estoqueNumero) || estoqueNumero < 0) {
+        newErrors.estoque = "Estoque deve ser um número inteiro maior ou igual a zero";
+      }
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -236,38 +279,53 @@ export default function ShopkeeperPage() {
     setSuccessMessage("");
 
     try {
-      const response = await fetch("/api/products/register", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          usuarioId: user.id,
-          nome: formData.nome.trim(),
-          preco: parseFloat(formData.preco),
-          categoriaId: parseInt(formData.categoriaId),
-          descricao: formData.descricao.trim() || null,
-          imagens: formData.imagens.length > 0 ? formData.imagens : undefined,
-        }),
+      const isEditing = editingProdutoId !== null;
+      const url = isEditing ? "/api/products/update" : "/api/products/register";
+      const method = isEditing ? "PUT" : "POST";
+      const bodyPayload: any = {
+        usuarioId: user.id,
+        nome: formData.nome.trim(),
+        preco: parseFloat(formData.preco),
+        categoriaId: parseInt(formData.categoriaId),
+        descricao: formData.descricao.trim() || null,
+        imagens: formData.imagens.length > 0 ? formData.imagens : undefined,
+      };
+      const estoqueValue =
+        formData.estoque.trim() === ""
+          ? 0
+          : parseInt(formData.estoque, 10);
+      if (!Number.isNaN(estoqueValue)) {
+        bodyPayload.estoque = estoqueValue;
+      }
+      if (isEditing) {
+        bodyPayload.produtoId = editingProdutoId!;
+      }
+
+      const response = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(bodyPayload),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || "Erro ao criar produto");
+        throw new Error(data.error || (editingProdutoId ? "Erro ao atualizar produto" : "Erro ao criar produto"));
       }
 
-      setSuccessMessage("Produto criado com sucesso!");
+      setSuccessMessage(editingProdutoId ? "Produto atualizado com sucesso!" : "Produto criado com sucesso!");
       setFormData({
         nome: "",
         preco: "",
         categoriaId: "",
         descricao: "",
+        estoque: "",
         imagens: [],
       });
       setCategoriaSearch("");
       setNovaCategoriaNome("");
       setImagemUrl("");
+      setEditingProdutoId(null);
       setShowForm(false);
 
       // Recarregar produtos
@@ -280,10 +338,48 @@ export default function ShopkeeperPage() {
       setErrors({
         submit:
           (error as { message?: string })?.message ||
-          "Erro ao criar produto. Tente novamente.",
+          (editingProdutoId ? "Erro ao atualizar produto. Tente novamente." : "Erro ao criar produto. Tente novamente."),
       });
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleEdit = (produto: Produto) => {
+    setEditingProdutoId(parseInt(String(produto.id)));
+    setFormData({
+      nome: produto.nome ?? "",
+      preco: String(produto.preco ?? ""),
+      categoriaId: String(produto.categoria?.id ?? ""),
+      descricao: produto.descricao ?? "",
+      estoque: produto.estoque !== undefined && produto.estoque !== null ? String(produto.estoque) : "",
+      imagens: (produto.imagens || []).map((img) => img.url),
+    });
+    setCategoriaSearch(produto.categoria?.nome ?? "");
+    setShowForm(true);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handleDelete = async (produtoId: number) => {
+    if (!user?.id) return;
+    const confirmed = window.confirm("Tem certeza que deseja excluir este produto?");
+    if (!confirmed) return;
+    try {
+      const resp = await fetch("/api/products/delete", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ usuarioId: user.id, produtoId }),
+      });
+      const data = await resp.json();
+      if (!resp.ok) {
+        throw new Error(data.error || "Erro ao excluir produto");
+      }
+      setSuccessMessage(data.message || "Produto removido com sucesso!");
+      showToast(data.message || "Produto removido com sucesso!", "success");
+      setReloadFlag((v) => v + 1);
+    } catch (err: unknown) {
+      const message = (err as { message?: string })?.message || "Erro ao excluir produto.";
+      showToast(message, "error");
     }
   };
 
@@ -304,6 +400,28 @@ export default function ShopkeeperPage() {
     });
   };
 
+  const getPrimaryImageUrl = (produto: Produto) => {
+    const url = produto.imagens && produto.imagens.length > 0 ? produto.imagens[0].url : null;
+    return (
+      url ||
+      "https://via.placeholder.com/400x300.png?text=Sem+Imagem"
+    );
+  };
+
+  const filteredProdutos = produtos.filter((p) => {
+    const byName =
+      searchTerm.trim() === "" ||
+      p.nome.toLowerCase().includes(searchTerm.trim().toLowerCase());
+    const byCategoria =
+      selectedCategoriaId === "all" || p.categoria?.id === selectedCategoriaId;
+    const ativoAtual = p.ativo ?? true;
+    const byStatus =
+      selectedStatus === "all" ||
+      (selectedStatus === "ativo" && ativoAtual) ||
+      (selectedStatus === "inativo" && !ativoAtual);
+    return byName && byCategoria && byStatus;
+  });
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center">
@@ -321,6 +439,17 @@ export default function ShopkeeperPage() {
 
   return (
     <div className="min-h-screen bg-gray-100">
+      {toast && (
+        <div
+          className={`fixed right-6 bottom-6 z-50 rounded-md px-4 py-3 shadow-lg text-sm font-medium transition-opacity ${
+            toast.type === "error"
+              ? "bg-red-600 text-white"
+              : "bg-blue-600 text-white"
+          }`}
+        >
+          {toast.message}
+        </div>
+      )}
       <CustomerHeader
         subtitle="Painel do Lojista - Gerencie seus produtos"
         title="BAXEINWEAR"
@@ -552,6 +681,28 @@ export default function ShopkeeperPage() {
                   )}
                 </div>
 
+                {/* Estoque */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Estoque
+                  </label>
+                  <input
+                    type="number"
+                    name="estoque"
+                    value={formData.estoque}
+                    onChange={handleChange}
+                    min="0"
+                    step="1"
+                    className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 ${
+                      errors.estoque ? "border-red-500" : "border-gray-300"
+                    }`}
+                    placeholder="0"
+                  />
+                  {errors.estoque && (
+                    <p className="mt-1 text-sm text-red-600">{errors.estoque}</p>
+                  )}
+                </div>
+
                 {/* Descrição */}
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -666,6 +817,7 @@ export default function ShopkeeperPage() {
                       preco: "",
                       categoriaId: "",
                       descricao: "",
+                      estoque: "",
                       imagens: [],
                     });
                     setCategoriaSearch("");
@@ -689,62 +841,118 @@ export default function ShopkeeperPage() {
           </div>
         )}
 
+        {/* Filtros */}
+        <div className="bg-white rounded-lg shadow-md p-4 mb-6">
+          <div className="flex flex-col md:flex-row gap-3">
+            <input
+              type="text"
+              placeholder="Buscar produto..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="flex-1 px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+            />
+            <select
+              value={selectedCategoriaId === "all" ? "all" : String(selectedCategoriaId)}
+              onChange={(e) => {
+                const v = e.target.value === "all" ? "all" : parseInt(e.target.value);
+                setSelectedCategoriaId(v as number | "all");
+              }}
+              className="px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+            >
+              <option value="all">Todas as Categorias</option>
+              {categorias.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.nome}
+                </option>
+              ))}
+            </select>
+            <select
+              value={selectedStatus}
+              onChange={(e) => setSelectedStatus(e.target.value as "all" | "ativo" | "inativo")}
+              className="px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+            >
+              <option value="all">Todos os Status</option>
+              <option value="ativo">Ativo</option>
+              <option value="inativo">Inativo</option>
+            </select>
+            <button
+              onClick={() => {
+                setSearchTerm("");
+                setSelectedCategoriaId("all");
+                setSelectedStatus("ativo");
+              }}
+              className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+            >
+              Limpar
+            </button>
+          </div>
+        </div>
+
         {/* Lista de Produtos */}
         {isLoadingProdutos ? (
           <div className="bg-white rounded-lg shadow-md p-12 text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
             <p className="mt-4 text-gray-600">Carregando produtos...</p>
           </div>
-        ) : produtos.length > 0 ? (
-          <div className="bg-white rounded-lg shadow-md overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Nome
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Categoria
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Preço
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Data de Criação
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {produtos.map((produto) => (
-                    <tr key={produto.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">
-                          {produto.nome}
+        ) : filteredProdutos.length > 0 ? (
+          <div className="bg-white rounded-lg shadow-md p-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredProdutos.map((produto) => (
+                <div key={produto.id} className="border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition">
+                  <div className="aspect-[4/3] bg-gray-100">
+                    {/* imagem do produto */}
+                    <img
+                      src={getPrimaryImageUrl(produto)}
+                      alt={produto.nome}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <div className="p-4">
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <h4 className="text-sm font-semibold text-gray-900">{produto.nome}</h4>
+                        <div className="text-xs text-gray-500">{produto.categoria?.nome}</div>
+                        <div className="mt-2">
+                          <span
+                            className={`inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-full ${
+                              produto.ativo ?? true
+                                ? "bg-green-100 text-green-700"
+                                : "bg-gray-200 text-gray-700"
+                            }`}
+                          >
+                            {produto.ativo ?? true ? "Ativo" : "Inativo"}
+                          </span>
                         </div>
-                        {produto.descricao && (
-                          <div className="text-sm text-gray-500 mt-1">
-                            {produto.descricao.length > 50
-                              ? `${produto.descricao.substring(0, 50)}...`
-                              : produto.descricao}
-                          </div>
-                        )}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
-                          {produto.categoria.nome}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {formatPrice(produto.preco)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {formatDate(produto.createdAt)}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                      </div>
+                      <div className="text-sm font-semibold text-blue-700">{formatPrice(produto.preco)}</div>
+                    </div>
+                    {produto.descricao && (
+                      <p className="text-sm text-gray-600 mt-2">
+                        {produto.descricao.length > 80 ? `${produto.descricao.substring(0, 80)}...` : produto.descricao}
+                      </p>
+                    )}
+                    <div className="text-xs text-gray-500 mt-2">
+                      Estoque: {produto.estoque ?? 0}
+                    </div>
+                    <div className="text-xs text-gray-500 mt-2">Criado em {formatDate(produto.createdAt)}</div>
+
+                    <div className="mt-4 flex items-center justify-end gap-2">
+                      <button
+                        onClick={() => handleEdit(produto)}
+                        className="px-3 py-1.5 text-sm border border-gray-300 rounded-md hover:bg-gray-50"
+                      >
+                        Editar
+                      </button>
+                      <button
+                        onClick={() => handleDelete(parseInt(String(produto.id)))}
+                        className="px-3 py-1.5 text-sm bg-red-600 text-white rounded-md hover:bg-red-700"
+                      >
+                        Excluir
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         ) : (

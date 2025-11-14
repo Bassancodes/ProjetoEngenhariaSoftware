@@ -6,7 +6,7 @@ import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library'
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { usuarioId, nome, preco, categoriaId, descricao, imagens } = body
+    const { usuarioId, nome, preco, categoriaId, descricao, imagens, estoque, ativo } = body
 
     // Validação dos campos obrigatórios
     if (!usuarioId) {
@@ -15,6 +15,28 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       )
     }
+
+    // Validar estoque se fornecido
+    let estoqueNumero: number | undefined
+    if (estoque !== undefined) {
+      const parsed =
+        typeof estoque === 'string'
+          ? parseInt(estoque, 10)
+          : typeof estoque === 'number'
+            ? Math.floor(estoque)
+            : NaN
+      if (isNaN(parsed) || parsed < 0) {
+        return NextResponse.json(
+          { error: 'Estoque deve ser um número inteiro maior ou igual a zero' },
+          { status: 400 }
+        )
+      }
+      estoqueNumero = parsed
+    }
+
+    // Validar ativo se fornecido
+    const ativoBoolean =
+      ativo === undefined ? true : Boolean(ativo)
 
     if (!nome || !preco || !categoriaId) {
       return NextResponse.json(
@@ -121,6 +143,8 @@ export async function POST(request: NextRequest) {
         categoriaId: categoriaIdNum,
         descricao: descricao || null,
         lojistaId: lojistaId,
+        estoque: estoqueNumero ?? 0,
+        ativo: ativoBoolean,
         imagens: {
           create: imagensValidadas,
         },

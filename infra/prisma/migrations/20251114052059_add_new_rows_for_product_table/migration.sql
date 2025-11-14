@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "Produto" ADD COLUMN     "ativo" BOOLEAN NOT NULL DEFAULT true,
+ADD COLUMN     "estoque" INTEGER NOT NULL DEFAULT 0;

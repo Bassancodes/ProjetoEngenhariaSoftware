@@ -12,6 +12,9 @@ export async function GET(request: NextRequest) {
     // Se não houver usuarioId, retornar todos os produtos (para clientes não autenticados ou catálogo público)
     if (!usuarioId) {
       const produtos = await prisma.produto.findMany({
+        where: {
+          ativo: true,
+        },
         include: {
           categoria: true,
           imagens: {
@@ -64,6 +67,9 @@ export async function GET(request: NextRequest) {
     // Se for cliente, retornar todos os produtos
     if (usuario.tipoUsuario === 'CLIENTE') {
       const produtos = await prisma.produto.findMany({
+        where: {
+          ativo: true,
+        },
         include: {
           categoria: true,
           imagens: {
