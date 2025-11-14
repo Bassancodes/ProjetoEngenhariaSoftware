@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState, ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 
 interface User {
   id: string;
@@ -20,27 +20,40 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(() => {
-    if (typeof window === "undefined") return null;
-    const storedUser = localStorage.getItem("auth_user");
-    if (!storedUser) return null;
-    try {
-      return JSON.parse(storedUser) as User;
-    } catch {
-      localStorage.removeItem("auth_user");
-      return null;
+  const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Carrega o usuário do localStorage apenas no cliente,
+  // garantindo estado inicial determinístico entre server e client
+  // para evitar erros de hidratação.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const storedUser = window.localStorage.getItem("auth_user");
+
+    if (!storedUser) {
+      setIsLoading(false);
+      return;
     }
-  });
-  const [isLoading] = useState(false);
+
+    try {
+      const parsedUser = JSON.parse(storedUser) as User;
+      setUser(parsedUser);
+    } catch {
+      window.localStorage.removeItem("auth_user");
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
   const login = (userData: User) => {
     setUser(userData);
-    localStorage.setItem("auth_user", JSON.stringify(userData));
+    window.localStorage.setItem("auth_user", JSON.stringify(userData));
   };
 
   const logout = () => {
     setUser(null);
-    localStorage.removeItem("auth_user");
+    window.localStorage.removeItem("auth_user");
   };
 
   return (
@@ -65,4 +78,5 @@ export function useAuth() {
   }
   return context;
 }
+
 
