@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
 import { QRCodeSVG } from "qrcode.react";
+import { CustomerHeader } from "@/components/CustomerHeader";
 
 export default function PaymentPage() {
   const router = useRouter();
@@ -67,42 +68,13 @@ export default function PaymentPage() {
   if (paymentConfirmed) {
     return (
       <div className="min-h-screen bg-white">
-        {/* Header Fixo */}
-        <header className="sticky top-0 bg-white border-b border-gray-200 z-50 shadow-sm">
-          <div className="max-w-7xl mx-auto px-6 py-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-8">
-                <div>
-                  <div className="text-xs text-gray-900 mb-1">
-                    BAXEIN WEAR - Pagamento
-                  </div>
-                  <div className="text-2xl font-bold text-gray-800">
-                    BAXEINWEAR
-                  </div>
-                </div>
-              </div>
-              <div className="flex items-center gap-6">
-                <span className="text-blue-600 font-semibold">Pagamento</span>
-                <div className="flex items-center gap-2 text-gray-900">
-                  <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center">
-                    <svg
-                      className="w-5 h-5 text-gray-600"
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                  </div>
-                  <span className="font-medium">CLIENTE</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </header>
+        <CustomerHeader
+          subtitle="BAXEIN WEAR - Pagamento Confirmado"
+          profileMenuItems={[
+            { label: "Meus Pedidos", href: "/customer/orders" },
+            { label: "Catálogo", href: "/customer/catalog" },
+          ]}
+        />
 
         {/* Conteúdo Principal - Confirmação */}
         <main className="max-w-4xl mx-auto px-6 py-16">
@@ -154,59 +126,15 @@ export default function PaymentPage() {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Header Fixo */}
-      <header className="sticky top-0 bg-white border-b border-gray-200 z-50 shadow-sm">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            {/* Lado Esquerdo - Logo */}
-            <div className="flex items-center gap-8">
-              <div>
-                <div className="text-xs text-gray-900 mb-1">
-                  BAXEIN WEAR - Pagamento
-                </div>
-                <div className="text-2xl font-bold text-gray-800">
-                  BAXEINWEAR
-                </div>
-              </div>
-            </div>
-
-            {/* Lado Direito - Navegação e Usuário */}
-            <div className="flex items-center gap-6">
-              <Link
-                href="/customer/cart"
-                className="text-gray-900 hover:text-gray-700 transition-colors duration-200 font-medium"
-              >
-                Carrinho
-              </Link>
-              <Link
-                href="/customer/checkout"
-                className="text-gray-900 hover:text-gray-700 transition-colors duration-200 font-medium"
-              >
-                Checkout
-              </Link>
-              <span className="text-blue-600 font-semibold">Pagamento</span>
-
-              {/* Usuário */}
-              <div className="flex items-center gap-2 text-gray-900">
-                <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center">
-                  <svg
-                    className="w-5 h-5 text-gray-600"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                </div>
-                <span className="font-medium">CLIENTE</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </header>
+      <CustomerHeader
+        subtitle="BAXEIN WEAR - Pagamento"
+        profileMenuItems={[
+          { label: "Meu Carrinho", href: "/customer/cart" },
+          { label: "Checkout", href: "/customer/checkout" },
+          { label: "Meus Pedidos", href: "/customer/orders" },
+          { label: "Catálogo", href: "/customer/catalog" },
+        ]}
+      />
 
       {/* Conteúdo Principal */}
       <main className="max-w-4xl mx-auto px-6 py-12">

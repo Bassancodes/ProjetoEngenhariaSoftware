@@ -4,6 +4,7 @@ import { useRouter, useParams } from "next/navigation";
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
 import { Product, ApiProduct } from "@/app/(admin)/customer/catalog/types";
+import { CustomerHeader } from "@/components/CustomerHeader";
 
 export default function ProductDetailsPage() {
   const router = useRouter();
@@ -183,52 +184,19 @@ export default function ProductDetailsPage() {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Header */}
-      <header className="sticky top-0 bg-white border-b border-gray-200 z-50 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 py-2">
-          <div className="flex items-center justify-between">
-            {/* Lado Esquerdo - Logo */}
-            <div className="flex items-center gap-4">
-              <div>
-                <div className="text-xs text-gray-900 mb-0.5">BAXEIN WEAR - {product.name}</div>
-                <div className="text-lg font-bold text-gray-800">BAXEINWEAR</div>
-              </div>
-            </div>
-
-            {/* Lado Direito - Ações */}
-            <div className="flex items-center gap-4">
-              {/* Barra de Busca */}
-              <div className="relative">
-                <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
-                  <svg
-                    className="w-5 h-5 text-gray-400"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                    />
-                  </svg>
-                </div>
-                <input
-                  type="text"
-                  placeholder="Pesquisar produtos..."
-                  className="pl-10 pr-4 py-1.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:border-transparent w-48 text-sm"
-                  style={{ '--tw-ring-color': '#2784D5' } as React.CSSProperties}
-                />
-              </div>
-
-              {/* Carrinho */}
-              <div
-                onClick={() => router.push("/customer/cart")}
-                className="flex items-center gap-2 cursor-pointer text-gray-700 hover:text-gray-900 transition-colors duration-200 relative"
-              >
+      <CustomerHeader
+        subtitle={`BAXEIN WEAR - ${product.name}`}
+        profileMenuItems={[
+          { label: "Catálogo", href: "/customer/catalog" },
+          { label: "Meu Carrinho", href: "/customer/cart" },
+          { label: "Meus Pedidos", href: "/customer/orders" },
+        ]}
+        actions={
+          <>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
                 <svg
-                  className="w-6 h-6"
+                  className="w-5 h-5 text-gray-400"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -237,37 +205,42 @@ export default function ProductDetailsPage() {
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     strokeWidth={2}
-                    d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
                   />
                 </svg>
-                {getItemCount() > 0 && (
-                  <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
-                    {getItemCount()}
-                  </span>
-                )}
               </div>
-
-              {/* Usuário */}
-              <div className="flex items-center gap-2 text-gray-700">
-                <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center">
-                  <svg
-                    className="w-5 h-5 text-gray-600"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                </div>
-                <span className="font-medium">CLIENTE</span>
-              </div>
+              <input
+                type="text"
+                placeholder="Pesquisar produtos..."
+                className="pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-48 text-sm"
+              />
             </div>
-          </div>
-        </div>
-      </header>
+            <div
+              onClick={() => router.push("/customer/cart")}
+              className="flex items-center gap-2 cursor-pointer text-gray-700 hover:text-gray-900 transition-colors duration-200 relative"
+            >
+              <svg
+                className="w-6 h-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
+                />
+              </svg>
+              {getItemCount() > 0 && (
+                <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                  {getItemCount()}
+                </span>
+              )}
+            </div>
+          </>
+        }
+      />
 
       {/* Conteúdo Principal */}
       <main className="max-w-7xl mx-auto px-4 pt-16 pb-4">
