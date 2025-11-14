@@ -290,11 +290,16 @@ export async function POST(request: NextRequest) {
   
         if (aggregatedItems.size > 0) {
           await tx.itemCarrinho.createMany({
-            data: Array.from(aggregatedItems.values()).map((item) => ({
-              carrinhoId: carrinho.id,
-              produtoId: item.produtoId,
-              quantidade: item.quantidade,
-            })),
+            data: Array.from(aggregatedItems.values()).map((item) => {
+              const metadata = metadataByProduct.get(item.produtoId)
+              return {
+                carrinhoId: carrinho.id,
+                produtoId: item.produtoId,
+                quantidade: item.quantidade,
+                corSelecionada: metadata?.selectedColor || null,
+                tamanhoSelecionado: metadata?.selectedSize || null,
+              }
+            }),
           })
         }
       })
@@ -314,11 +319,13 @@ export async function POST(request: NextRequest) {
           },
         },
       })
-  
+
       const itensFormatados =
         carrinhoAtualizado?.itensCarrinho.map((item: {
           id: number
           quantidade: number
+          corSelecionada: string | null
+          tamanhoSelecionado: string | null
           produto: {
             id: number
             nome: string
@@ -326,9 +333,13 @@ export async function POST(request: NextRequest) {
             categoria: { nome: string }
             imagens: Array<{ url: string }>
           }
-        }) =>
-          formatCartItem(item, metadataByProduct.get(item.produto.id) ?? undefined)
-        ) ?? []
+        }) => {
+          const metadata = {
+            selectedSize: item.tamanhoSelecionado || null,
+            selectedColor: item.corSelecionada || null,
+          }
+          return formatCartItem(item, metadata)
+        }) ?? []
   
       return NextResponse.json(
         {

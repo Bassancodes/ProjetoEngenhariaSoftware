@@ -32,6 +32,8 @@ function formatCartItem(
   item: {
     id: number
     quantidade: number
+    corSelecionada?: string | null
+    tamanhoSelecionado?: string | null
     produto: {
       id: number
       nome: string
@@ -56,8 +58,8 @@ function formatCartItem(
     category: item.produto.categoria.nome,
     quantity: item.quantidade,
     cartItemId: `${item.produto.id}-${item.id}`,
-    selectedSize: metadata?.selectedSize ?? DEFAULT_SIZE,
-    selectedColor: metadata?.selectedColor ?? DEFAULT_COLOR,
+    selectedSize: metadata?.selectedSize ?? item.tamanhoSelecionado ?? DEFAULT_SIZE,
+    selectedColor: metadata?.selectedColor ?? item.corSelecionada ?? DEFAULT_COLOR,
   }
 }
 
@@ -145,7 +147,13 @@ export async function GET(request: NextRequest) {
 
     // Transformar os itens para o formato esperado pelo frontend
     const items = carrinho.itensCarrinho.map(
-      (item: Parameters<typeof formatCartItem>[0]) => formatCartItem(item)
+      (item: Parameters<typeof formatCartItem>[0]) => {
+        const metadata = {
+          selectedSize: item.tamanhoSelecionado || null,
+          selectedColor: item.corSelecionada || null,
+        }
+        return formatCartItem(item, metadata)
+      }
     )
 
     return NextResponse.json(

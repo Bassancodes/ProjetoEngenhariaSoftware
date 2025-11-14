@@ -6,6 +6,7 @@ import { Product, FilterState, ApiProduct } from "./types";
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
 import { CustomerHeader } from "@/components/CustomerHeader";
+import { ProductSelectionModal } from "@/components/ProductSelectionModal";
 
 export default function CatalogPage() {
   const router = useRouter();
@@ -15,18 +16,120 @@ export default function CatalogPage() {
   const [selectedSize, setSelectedSize] = useState<string>("");
   const [selectedColor, setSelectedColor] = useState<string>("");
   const [showModal, setShowModal] = useState(false);
+  const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Função auxiliar para extrair cores e tamanhos de uma chave de variante
+  const parseVariantKey = (key: string): { cor: string; tamanho: string } => {
+    const parts = key.split('-');
+    if (parts.length !== 2) {
+      return { cor: '', tamanho: '' };
+    }
+    return {
+      cor: parts[0].trim(),
+      tamanho: parts[1].trim()
+    };
+  };
+
+  // Função para extrair cores e tamanhos disponíveis baseado no estoquePorVariante
+  const getAvailableOptions = (
+    stockByVariant: Record<string, number> | null | undefined,
+    allCores: string[],
+    allTamanhos: string[]
+  ): { cores: string[]; tamanhos: string[] } => {
+    if (!stockByVariant || Object.keys(stockByVariant).length === 0) {
+      return { cores: allCores, tamanhos: allTamanhos };
+    }
+
+    const coresComEstoque = new Set<string>();
+    const tamanhosComEstoque = new Set<string>();
+
+    for (const [key, stock] of Object.entries(stockByVariant)) {
+      if (stock > 0) {
+        const { cor, tamanho } = parseVariantKey(key);
+        if (cor) coresComEstoque.add(cor);
+        if (tamanho) tamanhosComEstoque.add(tamanho);
+      }
+    }
+
+    const coresDisponiveis = allCores.filter(cor => coresComEstoque.has(cor));
+    const tamanhosDisponiveis = allTamanhos.filter(tamanho => tamanhosComEstoque.has(tamanho));
+
+    return {
+      cores: coresDisponiveis,
+      tamanhos: tamanhosDisponiveis,
+    };
+  };
+
+  // Função para verificar se uma combinação cor-tamanho tem estoque disponível
+  const hasStockForVariant = (
+    stockByVariant: Record<string, number> | null | undefined,
+    cor: string,
+    tamanho: string
+  ): boolean => {
+    if (!stockByVariant || Object.keys(stockByVariant).length === 0) {
+      return true;
+    }
+    const variantKey = `${cor}-${tamanho}`;
+    const stock = stockByVariant[variantKey];
+    return stock !== undefined && stock > 0;
+  };
 
   // Função para converter produto da API para o formato do frontend
   const convertApiProductToProduct = (apiProduct: ApiProduct): Product => {
     const images = apiProduct.imagens && apiProduct.imagens.length > 0
       ? apiProduct.imagens.map(img => img.url)
-      : ["/placeholder.png"]; // Imagem padrão se não houver imagens
+      : ["/placeholder.png"];
     
     const price = typeof apiProduct.preco === 'string' 
       ? parseFloat(apiProduct.preco) 
       : Number(apiProduct.preco);
+
+    // Converter cores do banco (JSON) para array de strings
+    let cores: string[] = [];
+    if (apiProduct.cores) {
+      if (Array.isArray(apiProduct.cores)) {
+        cores = apiProduct.cores
+          .filter(cor => typeof cor === 'string')
+          .flatMap(cor => {
+            if (cor.includes(',')) {
+              return cor.split(',').map(c => c.trim()).filter(c => c.length > 0);
+            }
+            return [cor.trim()];
+          })
+          .filter((cor, index, self) => self.indexOf(cor) === index);
+      }
+    }
+
+    // Converter tamanhos do banco (JSON) para array de strings
+    let tamanhos: string[] = [];
+    if (apiProduct.tamanhos) {
+      if (Array.isArray(apiProduct.tamanhos)) {
+        tamanhos = apiProduct.tamanhos
+          .filter(tamanho => typeof tamanho === 'string')
+          .flatMap(tamanho => {
+            if (tamanho.includes(',')) {
+              return tamanho.split(',').map(t => t.trim()).filter(t => t.length > 0);
+            }
+            return [tamanho.trim()];
+          })
+          .filter((tamanho, index, self) => self.indexOf(tamanho) === index);
+      }
+    }
+
+    // Processar estoquePorVariante
+    let stockByVariant: Record<string, number> | undefined = undefined;
+    if (apiProduct.estoquePorVariante && typeof apiProduct.estoquePorVariante === 'object') {
+      stockByVariant = apiProduct.estoquePorVariante as Record<string, number>;
+    }
+
+    // Filtrar cores e tamanhos baseado no estoque disponível
+    const { cores: coresDisponiveis, tamanhos: tamanhosDisponiveis } = getAvailableOptions(
+      stockByVariant,
+      cores,
+      tamanhos
+    );
 
     return {
       id: apiProduct.id,
@@ -35,12 +138,13 @@ export default function CatalogPage() {
       image: images[0] || "/placeholder.png",
       images: images,
       category: apiProduct.categoria.nome,
-      sizes: ["P", "M", "G", "GG"], // Valores padrão - pode ser expandido no futuro
-      colors: ["Preto", "Branco", "Cinza"], // Valores padrão - pode ser expandido no futuro
+      sizes: tamanhosDisponiveis,
+      colors: coresDisponiveis,
       description: apiProduct.descricao || "",
-      isBestSeller: false, // Pode ser adicionado no futuro
-      isOnSale: false, // Pode ser adicionado no futuro
-      features: ["Qualidade Premium", "Produção Sustentável", "Troca Fácil"], // Valores padrão
+      stockByVariant: stockByVariant,
+      isBestSeller: false,
+      isOnSale: false,
+      features: ["Qualidade Premium", "Produção Sustentável", "Troca Fácil"],
     };
   };
 
@@ -168,23 +272,141 @@ export default function CatalogPage() {
     }).format(price);
   };
 
+  // Função para obter cores disponíveis baseado no tamanho selecionado
+  const getAvailableColors = (product: Product, selectedSize: string): string[] => {
+    if (!product.stockByVariant || Object.keys(product.stockByVariant).length === 0) {
+      return product.colors;
+    }
+
+    if (!selectedSize) {
+      const coresComEstoque = new Set<string>();
+      for (const [key, stock] of Object.entries(product.stockByVariant)) {
+        if (stock > 0) {
+          const { cor } = parseVariantKey(key);
+          if (cor) coresComEstoque.add(cor);
+        }
+      }
+      return product.colors.filter(cor => coresComEstoque.has(cor));
+    }
+
+    const coresDisponiveis = new Set<string>();
+    for (const [key, stock] of Object.entries(product.stockByVariant)) {
+      if (stock > 0) {
+        const { cor, tamanho } = parseVariantKey(key);
+        if (tamanho === selectedSize && cor) {
+          coresDisponiveis.add(cor);
+        }
+      }
+    }
+
+    return product.colors.filter(cor => coresDisponiveis.has(cor));
+  };
+
+  // Função para obter tamanhos disponíveis baseado na cor selecionada
+  const getAvailableSizes = (product: Product, selectedColor: string): string[] => {
+    if (!product.stockByVariant || Object.keys(product.stockByVariant).length === 0) {
+      return product.sizes;
+    }
+
+    if (!selectedColor) {
+      const tamanhosComEstoque = new Set<string>();
+      for (const [key, stock] of Object.entries(product.stockByVariant)) {
+        if (stock > 0) {
+          const { tamanho } = parseVariantKey(key);
+          if (tamanho) tamanhosComEstoque.add(tamanho);
+        }
+      }
+      return product.sizes.filter(tamanho => tamanhosComEstoque.has(tamanho));
+    }
+
+    const tamanhosDisponiveis = new Set<string>();
+    for (const [key, stock] of Object.entries(product.stockByVariant)) {
+      if (stock > 0) {
+        const { cor, tamanho } = parseVariantKey(key);
+        if (cor === selectedColor && tamanho) {
+          tamanhosDisponiveis.add(tamanho);
+        }
+      }
+    }
+
+    return product.sizes.filter(tamanho => tamanhosDisponiveis.has(tamanho));
+  };
+
   // Função para abrir modal de seleção
   const handleAddToCartClick = (product: Product) => {
+    // Só abrir se o produto tiver tamanhos e cores definidos
+    if (product.sizes.length === 0 || product.colors.length === 0) {
+      addToCart(product, "", "");
+      return;
+    }
+    
+    // Resetar estado antes de abrir
+    setIsPanelOpen(false);
     setSelectedProduct(product);
-    setSelectedSize(product.sizes[0] || "");
-    setSelectedColor(product.colors[0] || "");
+    
+    // Selecionar primeira cor e tamanho disponíveis
+    const coresDisponiveis = getAvailableColors(product, "");
+    const tamanhosDisponiveis = getAvailableSizes(product, "");
+    
+    setSelectedColor(coresDisponiveis[0] || "");
+    setSelectedSize(tamanhosDisponiveis[0] || "");
     setShowModal(true);
+    
+    // Pequeno delay para permitir renderização antes da animação
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        setIsPanelOpen(true);
+      });
+    });
+  };
+
+  // Handler para selecionar tamanho
+  const handleSizeSelect = (size: string) => {
+    if (!selectedProduct) return;
+    setSelectedSize(size);
+    
+    // Se a cor selecionada não está disponível para este tamanho, resetar cor
+    if (selectedColor && !hasStockForVariant(selectedProduct.stockByVariant, selectedColor, size)) {
+      const coresDisponiveis = getAvailableColors(selectedProduct, size);
+      setSelectedColor(coresDisponiveis[0] || "");
+    }
+  };
+
+  // Handler para selecionar cor
+  const handleColorSelect = (color: string) => {
+    if (!selectedProduct) return;
+    setSelectedColor(color);
+    
+    // Se o tamanho selecionado não está disponível para esta cor, resetar tamanho
+    if (selectedSize && !hasStockForVariant(selectedProduct.stockByVariant, color, selectedSize)) {
+      const tamanhosDisponiveis = getAvailableSizes(selectedProduct, color);
+      setSelectedSize(tamanhosDisponiveis[0] || "");
+    }
   };
 
   // Função para confirmar adição ao carrinho
   const handleConfirmAddToCart = () => {
     if (selectedProduct && selectedSize && selectedColor) {
+      // Validar se a combinação tem estoque
+      if (!hasStockForVariant(selectedProduct.stockByVariant, selectedColor, selectedSize)) {
+        alert("Esta combinação de cor e tamanho não está disponível em estoque.");
+        return;
+      }
       addToCart(selectedProduct, selectedSize, selectedColor);
+      closePanel();
+    }
+  };
+
+  // Função para fechar o painel com animação
+  const closePanel = () => {
+    setIsPanelOpen(false);
+    setTimeout(() => {
       setShowModal(false);
       setSelectedProduct(null);
       setSelectedSize("");
       setSelectedColor("");
-    }
+      setIsPanelOpen(false);
+    }, 300);
   };
 
   return (
@@ -388,80 +610,17 @@ export default function CatalogPage() {
       </main>
 
       {/* Modal de Seleção de Tamanho e Cor */}
-      {showModal && selectedProduct && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">
-              Selecionar opções
-            </h2>
-            <p className="text-gray-700 mb-4">{selectedProduct.name}</p>
-
-            {/* Seleção de Tamanho */}
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Tamanho
-              </label>
-              <div className="grid grid-cols-4 gap-2">
-                {selectedProduct.sizes.map((size) => (
-                  <button
-                    key={size}
-                    onClick={() => setSelectedSize(size)}
-                    className={`px-4 py-2 border-2 rounded-md transition-colors ${
-                      selectedSize === size
-                        ? "border-blue-600 bg-blue-50 text-blue-700"
-                        : "border-gray-300 hover:border-gray-400 text-gray-700"
-                    }`}
-                  >
-                    {size}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Seleção de Cor */}
-            <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Cor
-              </label>
-              <div className="flex flex-wrap gap-2">
-                {selectedProduct.colors.map((color) => (
-                  <button
-                    key={color}
-                    onClick={() => setSelectedColor(color)}
-                    className={`px-4 py-2 border-2 rounded-md transition-colors ${
-                      selectedColor === color
-                        ? "border-blue-600 bg-blue-50 text-blue-700"
-                        : "border-gray-300 hover:border-gray-400 text-gray-700"
-                    }`}
-                  >
-                    {color}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Botões do Modal */}
-            <div className="flex gap-3">
-              <button
-                onClick={() => {
-                  setShowModal(false);
-                  setSelectedProduct(null);
-                }}
-                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={handleConfirmAddToCart}
-                disabled={!selectedSize || !selectedColor}
-                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
-              >
-                Adicionar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ProductSelectionModal
+        showModal={showModal}
+        selectedProduct={selectedProduct}
+        selectedSize={selectedSize}
+        selectedColor={selectedColor}
+        isPanelOpen={isPanelOpen}
+        onSizeSelect={handleSizeSelect}
+        onColorSelect={handleColorSelect}
+        onConfirm={handleConfirmAddToCart}
+        onClose={closePanel}
+      />
     </div>
   );
 }

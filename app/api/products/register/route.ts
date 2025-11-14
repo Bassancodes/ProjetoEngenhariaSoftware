@@ -6,7 +6,7 @@ import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library'
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { usuarioId, nome, preco, categoriaId, descricao, imagens, estoque, ativo } = body
+    const { usuarioId, nome, preco, categoriaId, descricao, imagens, estoque, ativo, cores, tamanhos, estoquePorVariante } = body
 
     // Validação dos campos obrigatórios
     if (!usuarioId) {
@@ -99,6 +99,68 @@ export async function POST(request: NextRequest) {
 
     const lojistaId = usuario.lojista.id
 
+    // Validar cores se fornecidas
+    let coresValidadas: string[] | null = null
+    if (cores !== undefined && cores !== null) {
+      if (Array.isArray(cores)) {
+        coresValidadas = cores.filter(cor => typeof cor === 'string' && cor.trim().length > 0).map(cor => cor.trim())
+        if (coresValidadas.length === 0) {
+          coresValidadas = null
+        }
+      } else {
+        return NextResponse.json(
+          { error: 'Cores devem ser um array de strings' },
+          { status: 400 }
+        )
+      }
+    }
+
+    // Validar tamanhos se fornecidos
+    let tamanhosValidados: string[] | null = null
+    if (tamanhos !== undefined && tamanhos !== null) {
+      if (Array.isArray(tamanhos)) {
+        tamanhosValidados = tamanhos.filter(tamanho => typeof tamanho === 'string' && tamanho.trim().length > 0).map(tamanho => tamanho.trim())
+        if (tamanhosValidados.length === 0) {
+          tamanhosValidados = null
+        }
+      } else {
+        return NextResponse.json(
+          { error: 'Tamanhos devem ser um array de strings' },
+          { status: 400 }
+        )
+      }
+    }
+
+    // Validar estoquePorVariante se fornecido
+    let estoquePorVarianteValidado: Record<string, number> | null = null
+    if (estoquePorVariante !== undefined && estoquePorVariante !== null) {
+      if (typeof estoquePorVariante === 'object' && !Array.isArray(estoquePorVariante)) {
+        const estoqueObj = estoquePorVariante as Record<string, unknown>
+        estoquePorVarianteValidado = {}
+        
+        for (const [chave, valor] of Object.entries(estoqueObj)) {
+          const quantidade = typeof valor === 'number' 
+            ? Math.floor(valor)
+            : typeof valor === 'string'
+              ? parseInt(valor, 10)
+              : NaN
+          
+          if (!isNaN(quantidade) && quantidade >= 0) {
+            estoquePorVarianteValidado[chave] = quantidade
+          }
+        }
+
+        if (Object.keys(estoquePorVarianteValidado).length === 0) {
+          estoquePorVarianteValidado = null
+        }
+      } else {
+        return NextResponse.json(
+          { error: 'Estoque por variante deve ser um objeto com chaves string e valores numéricos' },
+          { status: 400 }
+        )
+      }
+    }
+
     // Validar imagens se fornecidas
     const imagensValidadas: Array<{ url: string; ordem: number }> = []
     if (imagens && Array.isArray(imagens)) {
@@ -135,7 +197,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Criar o produto com as imagens
+    // Criar o produto com as imagens, cores, tamanhos e estoque por variante
     const produto = await prisma.produto.create({
       data: {
         nome,
@@ -145,6 +207,9 @@ export async function POST(request: NextRequest) {
         lojistaId: lojistaId,
         estoque: estoqueNumero ?? 0,
         ativo: ativoBoolean,
+        cores: coresValidadas ?? undefined,
+        tamanhos: tamanhosValidados ?? undefined,
+        estoquePorVariante: estoquePorVarianteValidado ?? undefined,
         imagens: {
           create: imagensValidadas,
         },

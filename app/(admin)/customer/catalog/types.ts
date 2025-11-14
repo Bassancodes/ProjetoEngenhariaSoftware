@@ -11,6 +11,7 @@ export interface Product {
   sizes: string[];
   colors: string[];
   description?: string; // Descrição completa do produto
+  stockByVariant?: Record<string, number>; // Estoque por variante (ex: {"Preto-M": 10, "Branco-G": 5})
   rating?: {
     stars: number; // 1-5
     count: number; // Número de avaliações
@@ -30,6 +31,9 @@ export interface ApiProduct {
     nome: string;
   };
   descricao?: string;
+  cores?: string[] | null;
+  tamanhos?: string[] | null;
+  estoquePorVariante?: Record<string, number> | null;
   imagens?: Array<{
     id: number;
     url: string;

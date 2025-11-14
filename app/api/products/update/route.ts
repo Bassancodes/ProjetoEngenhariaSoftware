@@ -16,6 +16,9 @@ export async function PUT(request: NextRequest) {
       imagens,
       estoque,
       ativo,
+      cores,
+      tamanhos,
+      estoquePorVariante,
     } = body as {
       usuarioId?: string
       produtoId?: number | string
@@ -26,6 +29,9 @@ export async function PUT(request: NextRequest) {
       imagens?: string[]
       estoque?: number | string
       ativo?: boolean | string | number
+      cores?: string[]
+      tamanhos?: string[]
+      estoquePorVariante?: Record<string, number>
     }
 
     // Validações básicas
@@ -165,6 +171,65 @@ export async function PUT(request: NextRequest) {
       }
 
       dataToUpdate.ativo = parsedAtivo
+    }
+
+    // Validar e atualizar cores se fornecidas
+    if (cores !== undefined) {
+      if (cores === null) {
+        dataToUpdate.cores = null
+      } else if (Array.isArray(cores)) {
+        const coresValidadas = cores.filter(cor => typeof cor === 'string' && cor.trim().length > 0).map(cor => cor.trim())
+        dataToUpdate.cores = coresValidadas.length > 0 ? coresValidadas : null
+      } else {
+        return NextResponse.json(
+          { error: 'Cores devem ser um array de strings ou null' },
+          { status: 400 }
+        )
+      }
+    }
+
+    // Validar e atualizar tamanhos se fornecidos
+    if (tamanhos !== undefined) {
+      if (tamanhos === null) {
+        dataToUpdate.tamanhos = null
+      } else if (Array.isArray(tamanhos)) {
+        const tamanhosValidados = tamanhos.filter(tamanho => typeof tamanho === 'string' && tamanho.trim().length > 0).map(tamanho => tamanho.trim())
+        dataToUpdate.tamanhos = tamanhosValidados.length > 0 ? tamanhosValidados : null
+      } else {
+        return NextResponse.json(
+          { error: 'Tamanhos devem ser um array de strings ou null' },
+          { status: 400 }
+        )
+      }
+    }
+
+    // Validar e atualizar estoquePorVariante se fornecido
+    if (estoquePorVariante !== undefined) {
+      if (estoquePorVariante === null) {
+        dataToUpdate.estoquePorVariante = null
+      } else if (typeof estoquePorVariante === 'object' && !Array.isArray(estoquePorVariante)) {
+        const estoqueObj = estoquePorVariante as Record<string, unknown>
+        const estoqueValidado: Record<string, number> = {}
+        
+        for (const [chave, valor] of Object.entries(estoqueObj)) {
+          const quantidade = typeof valor === 'number' 
+            ? Math.floor(valor)
+            : typeof valor === 'string'
+              ? parseInt(valor, 10)
+              : NaN
+          
+          if (!isNaN(quantidade) && quantidade >= 0) {
+            estoqueValidado[chave] = quantidade
+          }
+        }
+
+        dataToUpdate.estoquePorVariante = Object.keys(estoqueValidado).length > 0 ? estoqueValidado : null
+      } else {
+        return NextResponse.json(
+          { error: 'Estoque por variante deve ser um objeto com chaves string e valores numéricos ou null' },
+          { status: 400 }
+        )
+      }
     }
 
     // Atualização transacional do produto e imagens (se enviadas)
