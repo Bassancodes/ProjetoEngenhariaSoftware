@@ -46,8 +46,13 @@ export default function ShopkeeperPage() {
     descricao: "",
     estoque: "",
     imagens: [] as string[],
+    cores: [] as string[],
+    tamanhos: [] as string[],
+    estoquePorVariante: {} as Record<string, number>,
   });
   const [imagemUrl, setImagemUrl] = useState("");
+  const [corInput, setCorInput] = useState("");
+  const [tamanhoInput, setTamanhoInput] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
@@ -297,6 +302,22 @@ export default function ShopkeeperPage() {
       if (!Number.isNaN(estoqueValue)) {
         bodyPayload.estoque = estoqueValue;
       }
+      
+      // Adicionar cores se houver
+      if (formData.cores.length > 0) {
+        bodyPayload.cores = formData.cores;
+      }
+      
+      // Adicionar tamanhos se houver
+      if (formData.tamanhos.length > 0) {
+        bodyPayload.tamanhos = formData.tamanhos;
+      }
+      
+      // Adicionar estoque por variante se houver
+      if (Object.keys(formData.estoquePorVariante).length > 0) {
+        bodyPayload.estoquePorVariante = formData.estoquePorVariante;
+      }
+      
       if (isEditing) {
         bodyPayload.produtoId = editingProdutoId!;
       }
@@ -321,10 +342,15 @@ export default function ShopkeeperPage() {
         descricao: "",
         estoque: "",
         imagens: [],
+        cores: [],
+        tamanhos: [],
+        estoquePorVariante: {},
       });
       setCategoriaSearch("");
       setNovaCategoriaNome("");
       setImagemUrl("");
+      setCorInput("");
+      setTamanhoInput("");
       setEditingProdutoId(null);
       setShowForm(false);
 
@@ -345,7 +371,43 @@ export default function ShopkeeperPage() {
     }
   };
 
-  const handleEdit = (produto: Produto) => {
+  const handleEdit = async (produto: Produto) => {
+    // Buscar dados completos do produto para obter cores e tamanhos
+    try {
+      const response = await fetch(`/api/products/list?usuarioId=${user?.id}`);
+      const data = await response.json();
+      if (response.ok && data.produtos) {
+        const produtoCompleto = data.produtos.find((p: any) => p.id === parseInt(String(produto.id)));
+        if (produtoCompleto) {
+          const cores = Array.isArray(produtoCompleto.cores) ? produtoCompleto.cores : [];
+          const tamanhos = Array.isArray(produtoCompleto.tamanhos) ? produtoCompleto.tamanhos : [];
+          const estoquePorVariante = produtoCompleto.estoquePorVariante && typeof produtoCompleto.estoquePorVariante === 'object' 
+            ? produtoCompleto.estoquePorVariante as Record<string, number>
+            : {};
+          
+          setEditingProdutoId(parseInt(String(produto.id)));
+          setFormData({
+            nome: produto.nome ?? "",
+            preco: String(produto.preco ?? ""),
+            categoriaId: String(produto.categoria?.id ?? ""),
+            descricao: produto.descricao ?? "",
+            estoque: produto.estoque !== undefined && produto.estoque !== null ? String(produto.estoque) : "",
+            imagens: (produto.imagens || []).map((img) => img.url),
+            cores: cores,
+            tamanhos: tamanhos,
+            estoquePorVariante: estoquePorVariante,
+          });
+          setCategoriaSearch(produto.categoria?.nome ?? "");
+          setShowForm(true);
+          window.scrollTo({ top: 0, behavior: "smooth" });
+          return;
+        }
+      }
+    } catch (error) {
+      console.error("Erro ao carregar dados do produto:", error);
+    }
+    
+    // Fallback se não conseguir buscar dados completos
     setEditingProdutoId(parseInt(String(produto.id)));
     setFormData({
       nome: produto.nome ?? "",
@@ -354,6 +416,9 @@ export default function ShopkeeperPage() {
       descricao: produto.descricao ?? "",
       estoque: produto.estoque !== undefined && produto.estoque !== null ? String(produto.estoque) : "",
       imagens: (produto.imagens || []).map((img) => img.url),
+      cores: [],
+      tamanhos: [],
+      estoquePorVariante: {},
     });
     setCategoriaSearch(produto.categoria?.nome ?? "");
     setShowForm(true);
@@ -516,7 +581,7 @@ export default function ShopkeeperPage() {
         {showForm && (
           <div className="bg-white rounded-lg shadow-md p-6 mb-8">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">
-              Cadastrar Novo Produto
+              {editingProdutoId ? "Editar Produto" : "Cadastrar Novo Produto"}
             </h3>
             <form onSubmit={handleSubmit}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -684,7 +749,7 @@ export default function ShopkeeperPage() {
                 {/* Estoque */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Estoque
+                    Estoque (geral)
                   </label>
                   <input
                     type="number"
@@ -701,7 +766,236 @@ export default function ShopkeeperPage() {
                   {errors.estoque && (
                     <p className="mt-1 text-sm text-red-600">{errors.estoque}</p>
                   )}
+                  <p className="mt-1 text-xs text-gray-500">
+                    Estoque geral (use &quot;Estoque por Variante&quot; abaixo para controle mais preciso)
+                  </p>
                 </div>
+
+                {/* Cores */}
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Cores Disponíveis
+                  </label>
+                  <div className="space-y-2">
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={corInput}
+                        onChange={(e) => setCorInput(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            const input = corInput.trim();
+                            if (input) {
+                              // Separar por vírgula se houver múltiplos valores
+                              const novasCores = input.split(',').map(c => c.trim()).filter(c => c.length > 0);
+                              setFormData((prev) => ({
+                                ...prev,
+                                cores: [...new Set([...prev.cores, ...novasCores])], // Usar Set para evitar duplicatas
+                              }));
+                              setCorInput("");
+                            }
+                          }
+                        }}
+                        placeholder="Digite uma cor (ex: Preto) ou múltiplas separadas por vírgula (ex: Preto, Branco)"
+                        className="flex-1 px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const input = corInput.trim();
+                          if (input) {
+                            // Separar por vírgula se houver múltiplos valores
+                            const novasCores = input.split(',').map(c => c.trim()).filter(c => c.length > 0);
+                            setFormData((prev) => ({
+                              ...prev,
+                              cores: [...new Set([...prev.cores, ...novasCores])], // Usar Set para evitar duplicatas
+                            }));
+                            setCorInput("");
+                          }
+                        }}
+                        disabled={!corInput.trim()}
+                        className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+                      >
+                        Adicionar
+                      </button>
+                    </div>
+                    {formData.cores.length > 0 && (
+                      <div className="flex flex-wrap gap-2">
+                        {formData.cores.map((cor, index) => (
+                          <span
+                            key={index}
+                            className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm"
+                          >
+                            {cor}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setFormData((prev) => ({
+                                  ...prev,
+                                  cores: prev.cores.filter((_, i) => i !== index),
+                                  estoquePorVariante: Object.fromEntries(
+                                    Object.entries(prev.estoquePorVariante).filter(
+                                      ([key]) => !key.startsWith(`${cor}-`)
+                                    )
+                                  ),
+                                }));
+                              }}
+                              className="text-blue-600 hover:text-blue-800 font-bold"
+                            >
+                              ×
+                            </button>
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Tamanhos */}
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Tamanhos Disponíveis
+                  </label>
+                  <div className="space-y-2">
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={tamanhoInput}
+                        onChange={(e) => setTamanhoInput(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            const input = tamanhoInput.trim();
+                            if (input) {
+                              // Separar por vírgula se houver múltiplos valores
+                              const novosTamanhos = input.split(',').map(t => t.trim()).filter(t => t.length > 0);
+                              setFormData((prev) => ({
+                                ...prev,
+                                tamanhos: [...new Set([...prev.tamanhos, ...novosTamanhos])], // Usar Set para evitar duplicatas
+                              }));
+                              setTamanhoInput("");
+                            }
+                          }
+                        }}
+                        placeholder="Digite um tamanho (ex: M) ou múltiplos separados por vírgula (ex: M, G)"
+                        className="flex-1 px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const input = tamanhoInput.trim();
+                          if (input) {
+                            // Separar por vírgula se houver múltiplos valores
+                            const novosTamanhos = input.split(',').map(t => t.trim()).filter(t => t.length > 0);
+                            setFormData((prev) => ({
+                              ...prev,
+                              tamanhos: [...new Set([...prev.tamanhos, ...novosTamanhos])], // Usar Set para evitar duplicatas
+                            }));
+                            setTamanhoInput("");
+                          }
+                        }}
+                        disabled={!tamanhoInput.trim()}
+                        className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+                      >
+                        Adicionar
+                      </button>
+                    </div>
+                    {formData.tamanhos.length > 0 && (
+                      <div className="flex flex-wrap gap-2">
+                        {formData.tamanhos.map((tamanho, index) => (
+                          <span
+                            key={index}
+                            className="inline-flex items-center gap-1 px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm"
+                          >
+                            {tamanho}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setFormData((prev) => ({
+                                  ...prev,
+                                  tamanhos: prev.tamanhos.filter((_, i) => i !== index),
+                                  estoquePorVariante: Object.fromEntries(
+                                    Object.entries(prev.estoquePorVariante).filter(
+                                      ([key]) => !key.endsWith(`-${tamanho}`)
+                                    )
+                                  ),
+                                }));
+                              }}
+                              className="text-green-600 hover:text-green-800 font-bold"
+                            >
+                              ×
+                            </button>
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Estoque por Variante */}
+                {formData.cores.length > 0 && formData.tamanhos.length > 0 && (
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Estoque por Variante (Cor + Tamanho)
+                    </label>
+                    <div className="border border-gray-300 rounded-md overflow-hidden">
+                      <div className="overflow-x-auto">
+                        <table className="min-w-full divide-y divide-gray-200">
+                          <thead className="bg-gray-50">
+                            <tr>
+                              <th className="px-4 py-2 text-left text-xs font-medium text-gray-700 uppercase">
+                                Cor
+                              </th>
+                              <th className="px-4 py-2 text-left text-xs font-medium text-gray-700 uppercase">
+                                Tamanho
+                              </th>
+                              <th className="px-4 py-2 text-left text-xs font-medium text-gray-700 uppercase">
+                                Estoque
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody className="bg-white divide-y divide-gray-200">
+                            {formData.cores.flatMap((cor) =>
+                              formData.tamanhos.map((tamanho) => {
+                                const chave = `${cor}-${tamanho}`;
+                                const estoqueAtual = formData.estoquePorVariante[chave] || 0;
+                                return (
+                                  <tr key={chave}>
+                                    <td className="px-4 py-2 text-sm text-gray-900">{cor}</td>
+                                    <td className="px-4 py-2 text-sm text-gray-900">{tamanho}</td>
+                                    <td className="px-4 py-2">
+                                      <input
+                                        type="number"
+                                        min="0"
+                                        step="1"
+                                        value={estoqueAtual}
+                                        onChange={(e) => {
+                                          const valor = parseInt(e.target.value, 10) || 0;
+                                          setFormData((prev) => ({
+                                            ...prev,
+                                            estoquePorVariante: {
+                                              ...prev.estoquePorVariante,
+                                              [chave]: valor,
+                                            },
+                                          }));
+                                        }}
+                                        className="w-20 px-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                                      />
+                                    </td>
+                                  </tr>
+                                );
+                              })
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                    <p className="mt-1 text-xs text-gray-500">
+                      Defina o estoque disponível para cada combinação de cor e tamanho
+                    </p>
+                  </div>
+                )}
 
                 {/* Descrição */}
                 <div className="md:col-span-2">
@@ -819,10 +1113,15 @@ export default function ShopkeeperPage() {
                       descricao: "",
                       estoque: "",
                       imagens: [],
+                      cores: [],
+                      tamanhos: [],
+                      estoquePorVariante: {},
                     });
                     setCategoriaSearch("");
                     setNovaCategoriaNome("");
                     setImagemUrl("");
+                    setCorInput("");
+                    setTamanhoInput("");
                     setErrors({});
                   }}
                   className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors"
