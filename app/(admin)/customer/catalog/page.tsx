@@ -22,10 +22,9 @@ export default function CatalogPage() {
 
   // Função para converter produto da API para o formato do frontend
   const convertApiProductToProduct = (apiProduct: ApiProduct): Product => {
-    const images =
-      apiProduct.imagens && apiProduct.imagens.length > 0
-        ? apiProduct.imagens.map((img) => img.url)
-        : ["/white-shirt.png"]; // Imagem padrão se não houver imagens
+    const images = apiProduct.imagens && apiProduct.imagens.length > 0
+      ? apiProduct.imagens.map(img => img.url)
+      : ["/placeholder.png"]; // Imagem padrão se não houver imagens
     
     const price = typeof apiProduct.preco === 'string' 
       ? parseFloat(apiProduct.preco) 
@@ -35,7 +34,7 @@ export default function CatalogPage() {
       id: apiProduct.id,
       name: apiProduct.nome,
       price: price,
-      image: images[0] || "/white-shirt.png",
+      image: images[0] || "/placeholder.png",
       images: images,
       category: apiProduct.categoria.nome,
       sizes: ["P", "M", "G", "GG"], // Valores padrão - pode ser expandido no futuro

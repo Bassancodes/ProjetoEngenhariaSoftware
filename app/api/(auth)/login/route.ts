@@ -63,7 +63,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Retornar resposta sem a senha
-    const { senha: _senha, ...usuarioSemSenha } = usuario
+    const { senha, ...usuarioSemSenha } = usuario
+    // Garantir que a variável seja considerada utilizada pelo ESLint
+    void senha
 
     return NextResponse.json(
       {

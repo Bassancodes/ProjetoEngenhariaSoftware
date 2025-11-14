@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { Prisma } from '@prisma/client'
 
 type CreateOrderRequest = {
   usuarioId?: string
@@ -115,7 +116,7 @@ export async function POST(request: NextRequest) {
       0
     )
 
-    const pedido = await prisma.$transaction(async (tx: any) => {
+    const pedido = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       const createdOrder = await tx.pedido.create({
         data: {
           clienteId,
@@ -127,7 +128,7 @@ export async function POST(request: NextRequest) {
                 item: {
                   produtoId: number
                   quantidade: number
-                  produto: { preco: any }
+                  produto: { preco: Prisma.Decimal }
                 }
               ) => ({
                 produto: { connect: { id: item.produtoId } },
