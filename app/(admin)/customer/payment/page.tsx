@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useCart } from "@/context/CartContext";
@@ -8,7 +8,50 @@ import { useAuth } from "@/context/AuthContext";
 import { QRCodeSVG } from "qrcode.react";
 import { CustomerHeader } from "@/components/CustomerHeader";
 
-export default function PaymentPage() {
+// Componente de fallback para o Suspense
+function PaymentPageSkeleton() {
+  return (
+    <div className="min-h-screen bg-white">
+      <CustomerHeader
+        subtitle="BAXEIN WEAR - Pagamento"
+        profileMenuItems={[
+          { label: "Meu Carrinho", href: "/customer/cart" },
+          { label: "Checkout", href: "/customer/checkout" },
+          { label: "Meus Pedidos", href: "/customer/orders" },
+          { label: "Catálogo", href: "/customer/catalog" },
+        ]}
+      />
+      <main className="max-w-4xl mx-auto px-6 py-12">
+        <div className="text-center mb-8">
+          <div className="h-10 bg-gray-200 rounded w-64 mx-auto mb-2 animate-pulse"></div>
+          <div className="h-6 bg-gray-200 rounded w-96 mx-auto animate-pulse"></div>
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="flex flex-col items-center justify-center">
+            <div className="w-72 h-72 bg-gray-200 rounded-lg animate-pulse mb-6"></div>
+            <div className="h-20 bg-gray-200 rounded-lg w-full max-w-md animate-pulse"></div>
+          </div>
+          <div className="bg-white border border-gray-200 rounded-lg p-6">
+            <div className="h-8 bg-gray-200 rounded w-48 mb-6 animate-pulse"></div>
+            <div className="space-y-4 mb-6">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="h-16 bg-gray-200 rounded animate-pulse"></div>
+              ))}
+            </div>
+            <div className="h-32 bg-gray-200 rounded mb-6 animate-pulse"></div>
+            <div className="space-y-3">
+              <div className="h-12 bg-gray-200 rounded animate-pulse"></div>
+              <div className="h-12 bg-gray-200 rounded animate-pulse"></div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+}
+
+// Componente interno que usa useSearchParams
+function PaymentContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { isAuthenticated, isLoading, user } = useAuth();
@@ -301,6 +344,15 @@ export default function PaymentPage() {
         </div>
       </main>
     </div>
+  );
+}
+
+// Componente principal que envolve PaymentContent em Suspense
+export default function PaymentPage() {
+  return (
+    <Suspense fallback={<PaymentPageSkeleton />}>
+      <PaymentContent />
+    </Suspense>
   );
 }
 
