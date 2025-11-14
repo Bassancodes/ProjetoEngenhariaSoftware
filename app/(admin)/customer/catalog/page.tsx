@@ -1,6 +1,4 @@
 "use client";
-
-import Image from "next/image";
 import { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Filters from "./Filters";
@@ -294,16 +292,15 @@ export default function CatalogPage() {
                   >
                     {/* Imagem do Produto - Clicável */}
                     <div
-                      onClick={() => router.push(`/customer/productDetails/${product.id}`)}
+                      onClick={() =>
+                        router.push(`/customer/productDetails/${product.id}`)
+                      }
                       className="w-full h-64 bg-gray-100 relative overflow-hidden cursor-pointer"
                     >
-                      <Image
+                      <img
                         src={product.image || "/placeholder.png"}
                         alt={product.name}
-                        fill
-                        className="object-cover"
-                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                        priority={false}
+                        className="w-full h-full object-cover"
                       />
                     </div>
 

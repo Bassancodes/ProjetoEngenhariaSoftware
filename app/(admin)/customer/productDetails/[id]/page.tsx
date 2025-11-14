@@ -1,6 +1,4 @@
 "use client";
-
-import Image from "next/image";
 import { useState, useMemo, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { useCart } from "@/context/CartContext";
@@ -278,12 +276,10 @@ export default function ProductDetailsPage() {
           <div>
             {/* Imagem Principal */}
             <div className="w-full aspect-square bg-white rounded-lg shadow-md overflow-hidden mb-2 relative max-h-[550px]">
-              <Image
+              <img
                 src={mainImage || "/placeholder.png"}
                 alt={product.name}
-                fill
-                className="object-cover"
-                sizes="(max-width: 1024px) 100vw, 50vw"
+                className="w-full h-full object-cover"
               />
             </div>
 
@@ -301,12 +297,10 @@ export default function ProductDetailsPage() {
                   style={selectedImageIndex === index ? { borderColor: '#2784D5' } : {}}
                 >
                   <div className="relative w-full h-full">
-                    <Image
+                    <img
                       src={img || "/placeholder.png"}
                       alt={`${product.name} - Vista ${index + 1}`}
-                      fill
-                      className="object-cover"
-                      sizes="64px"
+                      className="w-full h-full object-cover"
                     />
                   </div>
                 </button>
