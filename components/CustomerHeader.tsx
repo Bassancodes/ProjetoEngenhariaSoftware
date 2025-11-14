@@ -90,7 +90,7 @@ export function CustomerHeader({
         <div className="flex items-center justify-between">
           <div>
             <div className="text-xs text-gray-500 mb-1">{subtitle}</div>
-            <div className="text-2xl font-bold text-gray-800">{title}</div>
+            <div className="text-2xl font-bold text-black">{title}</div>
           </div>
 
           <div className="flex items-center gap-4">

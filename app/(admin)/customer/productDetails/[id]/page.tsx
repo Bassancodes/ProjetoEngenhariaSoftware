@@ -212,7 +212,7 @@ export default function ProductDetailsPage() {
               <input
                 type="text"
                 placeholder="Pesquisar produtos..."
-                className="pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-48 text-sm"
+                className="pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-48 text-sm text-black"
               />
             </div>
             <div
@@ -355,7 +355,7 @@ export default function ProductDetailsPage() {
 
             {/* Seleção de Cor */}
             <div className="mb-3">
-              <label className="block text-xs font-medium text-gray-700 mb-1.5">
+              <label className="block text-xs font-medium text-black mb-1.5">
                 Cor
               </label>
               <div className="flex gap-2">
@@ -387,13 +387,13 @@ export default function ProductDetailsPage() {
 
             {/* Seletor de Quantidade */}
             <div className="mb-4">
-              <label className="block text-xs font-medium text-gray-700 mb-1.5">
+              <label className="block text-xs font-medium text-black mb-1.5">
                 Quantidade
               </label>
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                  className="w-8 h-8 border-2 border-gray-300 rounded-md flex items-center justify-center hover:bg-gray-50 transition-colors"
+                  className="w-8 h-8 border-2 border-gray-300 rounded-md flex items-center justify-center hover:bg-gray-50 transition-colors text-black"
                 >
                   <span className="text-sm font-medium">-</span>
                 </button>
@@ -402,12 +402,12 @@ export default function ProductDetailsPage() {
                   min="1"
                   value={quantity}
                   onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
-                  className="w-16 h-8 border-2 border-gray-300 rounded-md text-center text-sm font-medium focus:outline-none focus:ring-2"
+                  className="w-16 h-8 border-2 border-gray-300 rounded-md text-center text-sm font-medium focus:outline-none focus:ring-2 text-black"
                   style={{ '--tw-ring-color': '#2784D5' } as React.CSSProperties}
                 />
                 <button
                   onClick={() => setQuantity(quantity + 1)}
-                  className="w-8 h-8 border-2 border-gray-300 rounded-md flex items-center justify-center hover:bg-gray-50 transition-colors"
+                  className="w-8 h-8 border-2 border-gray-300 rounded-md flex items-center justify-center hover:bg-gray-50 transition-colors text-black"
                 >
                   <span className="text-sm font-medium">+</span>
                 </button>
@@ -419,7 +419,7 @@ export default function ProductDetailsPage() {
               <button
                 onClick={handleAddToCart}
                 disabled={!selectedSize || !selectedColor}
-                className="w-full text-white font-medium py-2.5 px-4 rounded-md transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed text-sm"
+                className="w-full text-white font-medium py-2.5 px-4 rounded-md transition-colors disabled:bg-black disabled:cursor-not-allowed text-sm"
                 style={{ 
                   backgroundColor: !selectedSize || !selectedColor ? undefined : '#2784D5',
                 }}
