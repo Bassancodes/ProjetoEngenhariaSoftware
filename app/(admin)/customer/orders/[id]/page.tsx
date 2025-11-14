@@ -34,6 +34,19 @@ type Payment = {
   createdAt: string;
 };
 
+type EnderecoEntrega = {
+  cep?: string | null;
+  logradouro?: string | null;
+  numero?: string | null;
+  complemento?: string | null;
+  bairro?: string | null;
+  cidade?: string | null;
+  uf?: string | null;
+  nomeCompleto?: string | null;
+  email?: string | null;
+  telefone?: string | null;
+};
+
 type OrderDetails = {
   id: number;
   status: string;
@@ -46,6 +59,7 @@ type OrderDetails = {
     email: string;
     endereco: string;
   };
+  enderecoEntrega?: EnderecoEntrega;
   lojista: {
     id: number;
     empresa: string;
@@ -460,32 +474,163 @@ export default function OrderDetailsPage() {
               <h2 className="text-xl font-semibold text-gray-900 mb-4">
                 Endereço de Entrega
               </h2>
-              <div className="flex items-start">
-                <svg
-                  className="w-5 h-5 text-gray-400 mr-3 mt-0.5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                  />
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                  />
-                </svg>
-                <div>
-                  <p className="text-sm text-gray-600 mb-1">Endereço</p>
-                  <p className="font-medium text-gray-900">{order.cliente.endereco}</p>
+              {order.enderecoEntrega ? (
+                <div className="space-y-3">
+                  {/* Nome Completo */}
+                  {order.enderecoEntrega.nomeCompleto && (
+                    <div className="flex items-start">
+                      <svg
+                        className="w-5 h-5 text-gray-400 mr-3 mt-0.5 flex-shrink-0"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                        />
+                      </svg>
+                      <div className="flex-1">
+                        <p className="text-sm text-gray-600">Destinatário</p>
+                        <p className="font-medium text-gray-900">
+                          {order.enderecoEntrega.nomeCompleto}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Email */}
+                  {order.enderecoEntrega.email && (
+                    <div className="flex items-start">
+                      <svg
+                        className="w-5 h-5 text-gray-400 mr-3 mt-0.5 flex-shrink-0"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                        />
+                      </svg>
+                      <div className="flex-1">
+                        <p className="text-sm text-gray-600">Email</p>
+                        <p className="font-medium text-gray-900">
+                          {order.enderecoEntrega.email}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Telefone */}
+                  {order.enderecoEntrega.telefone && (
+                    <div className="flex items-start">
+                      <svg
+                        className="w-5 h-5 text-gray-400 mr-3 mt-0.5 flex-shrink-0"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
+                        />
+                      </svg>
+                      <div className="flex-1">
+                        <p className="text-sm text-gray-600">Telefone</p>
+                        <p className="font-medium text-gray-900">
+                          {order.enderecoEntrega.telefone}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Endereço Completo */}
+                  <div className="flex items-start">
+                    <svg
+                      className="w-5 h-5 text-gray-400 mr-3 mt-0.5 flex-shrink-0"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                      />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                      />
+                    </svg>
+                    <div className="flex-1 space-y-1">
+                      <p className="text-sm text-gray-600">Endereço</p>
+                      <div className="font-medium text-gray-900">
+                        {order.enderecoEntrega.logradouro && (
+                          <>
+                            {order.enderecoEntrega.logradouro}
+                            {order.enderecoEntrega.numero && `, ${order.enderecoEntrega.numero}`}
+                            {order.enderecoEntrega.complemento && ` - ${order.enderecoEntrega.complemento}`}
+                          </>
+                        )}
+                      </div>
+                      {order.enderecoEntrega.bairro && (
+                        <p className="text-sm text-gray-700">
+                          {order.enderecoEntrega.bairro}
+                        </p>
+                      )}
+                      {(order.enderecoEntrega.cidade || order.enderecoEntrega.uf) && (
+                        <p className="text-sm text-gray-700">
+                          {order.enderecoEntrega.cidade}
+                          {order.enderecoEntrega.cidade && order.enderecoEntrega.uf && ' - '}
+                          {order.enderecoEntrega.uf}
+                        </p>
+                      )}
+                      {order.enderecoEntrega.cep && (
+                        <p className="text-sm text-gray-600">
+                          CEP: {order.enderecoEntrega.cep}
+                        </p>
+                      )}
+                    </div>
+                  </div>
                 </div>
-                
-              </div>
+              ) : (
+                // Fallback para pedidos antigos sem endereço estruturado
+                <div className="flex items-start">
+                  <svg
+                    className="w-5 h-5 text-gray-400 mr-3 mt-0.5 flex-shrink-0"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                    />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                    />
+                  </svg>
+                  <div>
+                    <p className="text-sm text-gray-600 mb-1">Endereço</p>
+                    <p className="font-medium text-gray-900">{order.cliente.endereco}</p>
+                  </div>
+                </div>
+              )}
             </div>
             
           </div>

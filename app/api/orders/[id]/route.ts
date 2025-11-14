@@ -191,6 +191,22 @@ export async function GET(request: NextRequest, context: RouteContext) {
       0
     )
 
+    // Usar endereço salvo no pedido, ou fallback para endereço do cliente (compatibilidade com pedidos antigos)
+    const enderecoEntrega = pedido.enderecoEntrega 
+      ? pedido.enderecoEntrega as {
+          cep?: string
+          logradouro?: string
+          numero?: string
+          complemento?: string
+          bairro?: string
+          cidade?: string
+          uf?: string
+          nomeCompleto?: string
+          email?: string
+          telefone?: string
+        }
+      : null
+
     const orderDetails = {
       id: pedido.id,
       status: pedido.status,
@@ -202,6 +218,19 @@ export async function GET(request: NextRequest, context: RouteContext) {
         nome: pedido.cliente.usuario.nome,
         email: pedido.cliente.usuario.email,
         endereco: pedido.cliente.endereco,
+      },
+      enderecoEntrega: enderecoEntrega || {
+        // Fallback para pedidos antigos sem endereço salvo
+        logradouro: pedido.cliente.endereco,
+        cep: null,
+        numero: null,
+        complemento: null,
+        bairro: null,
+        cidade: null,
+        uf: null,
+        nomeCompleto: pedido.cliente.usuario.nome,
+        email: pedido.cliente.usuario.email,
+        telefone: null,
       },
       lojista: {
         id: pedido.lojista.id,

@@ -53,6 +53,8 @@ model Produto {
   descricao String?
   estoque Int @default(0)
   ativo Boolean @default(true)
+  cor String?
+  tamanhos String?
   itensPedido ItemPedido[]
   itensCarrinho ItemCarrinho[]
   lojista Lojista @relation(fields: [lojistaId], references: [id])
@@ -78,6 +80,7 @@ model Pedido {
   itensPedido ItemPedido[]
   status PedidoStatus
   pagamentos Pagamento[]
+  enderecoEntrega Json @default("{}")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }

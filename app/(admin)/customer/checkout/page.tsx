@@ -142,15 +142,60 @@ export default function CheckoutPage() {
       return;
     }
 
+    // Validar campos obrigatórios do endereço
+    if (!formData.cep || !formData.logradouro || !formData.numero || 
+        !formData.bairro || !formData.cidade || !formData.uf || 
+        !formData.nomeCompleto || !formData.email || !formData.telefone) {
+      alert("Por favor, preencha todos os campos obrigatórios do endereço de entrega.");
+      return;
+    }
+
+    // Validar formato de CEP (8 dígitos)
+    const cepNumbers = formData.cep.replace(/\D/g, "");
+    if (cepNumbers.length !== 8) {
+      alert("CEP deve ter 8 dígitos.");
+      return;
+    }
+
+    // Validar formato de email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      alert("Por favor, insira um email válido.");
+      return;
+    }
+
+    // Validar UF (2 caracteres)
+    if (formData.uf.trim().length !== 2) {
+      alert("UF deve ter 2 caracteres.");
+      return;
+    }
+
     setIsCreatingOrder(true);
 
     try {
+      // Preparar objeto de endereço de entrega
+      const enderecoEntrega = {
+        cep: formData.cep.trim(),
+        logradouro: formData.logradouro.trim(),
+        numero: formData.numero.trim(),
+        complemento: formData.complemento.trim() || "",
+        bairro: formData.bairro.trim(),
+        cidade: formData.cidade.trim(),
+        uf: formData.uf.trim().toUpperCase(),
+        nomeCompleto: formData.nomeCompleto.trim(),
+        email: formData.email.trim(),
+        telefone: formData.telefone.trim(),
+      };
+
       const response = await fetch("/api/orders/create", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ usuarioId: user.id }),
+        body: JSON.stringify({ 
+          usuarioId: user.id,
+          enderecoEntrega: enderecoEntrega,
+        }),
       });
 
       if (!response.ok) {
