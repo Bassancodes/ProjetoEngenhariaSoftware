@@ -83,6 +83,12 @@ export function CustomerHeader({
   };
 
   const profileInitial = (user?.nome ?? "Cliente").charAt(0).toUpperCase();
+  
+  // Determinar tipo de usuário e estilo
+  const isLojista = user?.tipoPerfil === "lojista";
+  const userTypeLabel = isLojista ? "Lojista" : "Cliente";
+  const profileBgColor = isLojista ? "bg-purple-100" : "bg-blue-100";
+  const profileTextColor = isLojista ? "text-purple-700" : "text-blue-700";
 
   return (
     <header className="sticky top-0 bg-white border-b border-gray-200 z-50 shadow-sm">
@@ -111,7 +117,7 @@ export function CustomerHeader({
                 onClick={() => setIsMenuOpen((state) => !state)}
                 className="flex items-center gap-2 text-gray-900 focus:outline-none"
               >
-                <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-semibold uppercase">
+                <div className={`w-8 h-8 rounded-full ${profileBgColor} flex items-center justify-center ${profileTextColor} font-semibold uppercase`}>
                   {profileInitial}
                 </div>
                 <div className="hidden sm:flex flex-col leading-tight text-left">
@@ -119,7 +125,7 @@ export function CustomerHeader({
                     {user?.nome ?? "Cliente"}
                   </span>
                   <span className="text-xs text-gray-500 uppercase tracking-wide">
-                    Cliente
+                    {userTypeLabel}
                   </span>
                 </div>
                 <svg

@@ -520,6 +520,7 @@ export default function ShopkeeperPage() {
         title="BAXEINWEAR"
         profileMenuItems={[
           { label: "Meus Produtos", href: "/shopkeeper", disabled: true },
+          { label: "Histórico de Vendas", href: "/shopkeeper/sales-history" },
         ]}
       />
 
