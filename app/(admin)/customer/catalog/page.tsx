@@ -337,6 +337,12 @@ export default function CatalogPage() {
 
   // Função para abrir modal de seleção
   const handleAddToCartClick = (product: Product) => {
+    // Verificar se o usuário está autenticado
+    if (!user) {
+      router.push("/login");
+      return;
+    }
+
     // Só abrir se o produto tiver tamanhos e cores definidos
     if (product.sizes.length === 0 || product.colors.length === 0) {
       addToCart(product, "", "");
